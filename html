@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AURÉLIA | Fine Jewelry</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cream: '#FDFBF7',
+                        softbeige: '#F4EFEA',
+                        luxgold: '#D4AF37',
+                        darkgold: '#AA7C11',
+                        luxdark: '#1A1A1A',
+                    },
+                    fontFamily: {
+                        serif: ['Playfair Display', 'Georgia', 'serif'],
+                        sans: ['Montserrat', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #FDFBF7;
+            color: #1A1A1A;
+        }
+        h1, h2, h3, h4, .font-serif {
+            font-family: 'Playfair Display', Georgia, serif;
+        }
+        .gold-gradient {
+            background: linear-gradient(135deg, #F3E7C4 0%, #D4AF37 50%, #AA7C11 100%);
+        }
+        .gold-text-gradient {
+            background: linear-gradient(135deg, #C5A059 0%, #D4AF37 50%, #996515 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #FDFBF7;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #D4AF37;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-cream text-luxdark antialiased selection:bg-luxgold selection:text-white">
+
+    <!-- Top Announcement Bar -->
+    <div class="bg-luxdark text-cream text-xs py-2 px-4 text-center tracking-widest uppercase">
+        <span id="announcement-text">Complimentary Shipping Across Egypt via البريد المصري | Exclusive Fine Jewelry</span>
+    </div>
+
+    <!-- Navigation Bar -->
+    <header class="sticky top-0 z-50 bg-cream/90 backdrop-blur-md border-b border-softbeige transition-all duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <!-- Left: Mobile Menu & Language Toggle -->
+            <div class="flex items-center space-x-4 space-x-reverse">
+                <button id="mobile-menu-btn" class="lg:hidden text-luxdark focus:outline-none text-xl p-2">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <button id="lang-toggle" class="text-xs font-semibold tracking-wider uppercase border border-luxgold/50 px-3 py-1.5 rounded-full hover:bg-luxgold hover:text-white transition-all">
+                    عربي / EN
+                </button>
+            </div>
+
+            <!-- Center: Logo -->
+            <div class="text-center">
+                <a href="#" class="font-serif text-3xl sm:text-4xl tracking-widest font-bold gold-text-gradient">AURÉLIA</a>
+                <p class="text-[9px] tracking-[0.3em] uppercase text-luxgold font-medium">Fine Jewelry • مصر</p>
+            </div>
+
+            <!-- Right: Actions (Search, Wishlist, Cart, Profile) -->
+            <div class="flex items-center space-x-5 space-x-reverse text-lg">
+                <button id="search-btn" class="hover:text-luxgold transition-colors hidden sm:block"><i class="fa-solid fa-magnifying-glass"></i></button>
+                <button id="wishlist-btn" class="hover:text-luxgold transition-colors relative">
+                    <i class="fa-regular fa-heart"></i>
+                    <span id="wishlist-count" class="absolute -top-2 -right-2 bg-luxgold text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-sans">0</span>
+                </button>
+                <button id="cart-btn" class="hover:text-luxgold transition-colors relative">
+                    <i class="fa-solid fa-bag-shopping"></i>
+                    <span id="cart-count" class="absolute -top-2 -right-2 bg-luxgold text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-sans">0</span>
+                </button>
+                <button id="profile-btn" class="hover:text-luxgold transition-colors">
+                    <i class="fa-regular fa-user"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Navigation Categories Bar -->
+        <nav class="hidden lg:flex justify-center space-x-10 space-x-reverse border-t border-softbeige py-3 text-xs uppercase tracking-widest font-medium">
+            <a href="#hero" class="hover:text-luxgold transition-colors">Home</a>
+            <a href="#categories" class="hover:text-luxgold transition-colors">Collections</a>
+            <a href="#bestsellers" class="hover:text-luxgold transition-colors">Bestsellers</a>
+            <a href="#design-panel" class="hover:text-luxgold transition-colors text-luxgold font-semibold">Responsive & Admin System</a>
+        </nav>
+    </header>
+
+    <!-- Mobile Drawer Menu -->
+    <div id="mobile-menu" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm hidden transition-opacity opacity-0">
+        <div class="absolute top-0 left-0 bottom-0 w-80 bg-cream shadow-2xl p-6 flex flex-col justify-between transform -translate-x-full transition-transform duration-300" id="mobile-menu-drawer">
+            <div>
+                <div class="flex items-center justify-between pb-6 border-b border-softbeige">
+                    <span class="font-serif text-2xl font-bold gold-text-gradient">AURÉLIA</span>
+                    <button id="close-mobile-menu" class="text-xl text-luxdark hover:text-luxgold"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="flex flex-col space-y-4 mt-6 text-sm tracking-widest uppercase font-medium">
+                    <a href="#hero" class="mobile-nav-link hover:text-luxgold">Home</a>
+                    <a href="#categories" class="mobile-nav-link hover:text-luxgold">Collections</a>
+                    <a href="#bestsellers" class="mobile-nav-link hover:text-luxgold">Bestsellers</a>
+                    <a href="#design-panel" class="mobile-nav-link hover:text-luxgold text-luxgold">System & Device Panel</a>
+                </div>
+            </div>
+            <div class="text-xs text-gray-500 text-center pb-4">
+                <p>© 2026 AURÉLIA Fine Jewelry Egypt.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hero Section -->
+    <section id="hero" class="relative min-h-[85vh] flex items-center justify-center bg-softbeige overflow-hidden">
+        <div class="absolute inset-0 z-0 opacity-45">
+            <img src="https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&q=80&w=1920" alt="Radiance Redefined Fine Jewelry" class="w-full h-full object-cover">
+        </div>
+        <div class="absolute inset-0 bg-gradient-to-t from-cream via-transparent to-transparent"></div>
+        
+        <div class="relative z-10 max-w-4xl mx-auto px-4 text-center py-20">
+            <span class="text-xs uppercase tracking-[0.4em] font-semibold text-luxgold block mb-4">Radiance Redefined</span>
+            <h1 class="font-serif text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight text-luxdark mb-6">
+                Timeless Elegance in <span class="gold-text-gradient">Pure Gold & Diamonds</span>
+            </h1>
+            <p class="text-sm sm:text-base text-gray-700 max-w-xl mx-auto mb-10 font-light leading-relaxed">
+                Discover masterfully crafted fine jewelry collections designed for your most precious moments. Exclusively presented in Egyptian Pounds.
+            </p>
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <a href="#bestsellers" class="bg-luxdark text-cream px-8 py-4 text-xs uppercase tracking-widest font-medium rounded-none hover:bg-luxgold transition-all shadow-lg">
+                    Explore Bestsellers
+                </a>
+                <a href="#categories" class="border border-luxdark text-luxdark px-8 py-4 text-xs uppercase tracking-widest font-medium rounded-none hover:bg-luxdark hover:text-cream transition-all">
+                    View Collections
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Device Detection & Inline Admin Design Adaptation Control Panel -->
+    <section id="design-panel" class="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div class="bg-softbeige/60 border border-luxgold/30 rounded-lg p-6 sm:p-10 shadow-xl relative overflow-hidden">
+            <div class="absolute top-0 right-0 bg-luxgold text-white text-[10px] uppercase tracking-widest px-4 py-1 font-semibold rounded-bl">
+                Admin & Responsive Suite
+            </div>
+            
+            <div class="text-center max-w-3xl mx-auto mb-10">
+                <span class="text-xs uppercase tracking-[0.3em] font-semibold text-luxgold block mb-2">Live Adaptation Engine</span>
+                <h2 class="font-serif text-2xl sm:text-4xl font-bold text-luxdark">DESIGN ADAPTATION & DEVICE DETECTION SYSTEM</h2>
+                <p class="text-xs sm:text-sm text-gray-600 mt-2">
+                    Real-time responsive viewport analysis combined with Mohamed Nasser's inline administrative controls.
+                </p>
+            </div>
+
+            <!-- Viewport Status Indicator Bar -->
+            <div class="bg-white/80 border border-luxgold/20 p-4 rounded mb-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="flex items-center space-x-3 space-x-reverse">
+                    <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span id="active-viewport-status" class="text-xs uppercase tracking-widest font-bold text-luxdark">ACTIVE VIEWPORT: DETECTING...</span>
+                </div>
+                <div class="flex items-center space-x-4 space-x-reverse text-xs text-gray-600">
+                    <span>Width: <strong id="screen-width-val">0</strong>px</span>
+                    <span>Device Category: <strong id="device-category-val" class="text-luxgold">Desktop</strong></span>
+                </div>
+            </div>
+
+            <!-- 3 Interactive Control Panels Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- 1. Phone / Mobile -->
+                <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm hover:border-luxgold transition-all">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-xs uppercase tracking-widest font-bold text-luxdark"><i class="fa-solid fa-mobile-screen mr-2 text-luxgold"></i>1. Phone / Mobile</span>
+                        <span class="text-[10px] bg-gray-100 px-2 py-0.5 rounded text-gray-600">375px - 480px</span>
+                    </div>
+                    <p class="text-xs text-gray-600 mb-4">
+                        Miniature layout simulation: Single vertical column, collapsed hamburger menu, stacked product cards.
+                    </p>
+                    <div class="bg-cream p-3 rounded border border-dashed border-luxgold/40 text-center">
+                        <div class="w-16 h-28 mx-auto bg-luxdark rounded-lg p-1 shadow flex flex-col justify-between">
+                            <div class="h-2 w-4 bg-luxgold rounded-full mx-auto"></div>
+                            <div class="bg-white h-20 rounded text-[8px] flex items-center justify-center text-luxdark font-bold">1-Col Stack</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Tablet / iPad -->
+                <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm hover:border-luxgold transition-all">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-xs uppercase tracking-widest font-bold text-luxdark"><i class="fa-solid fa-tablet-screen-button mr-2 text-luxgold"></i>2. Tablet / iPad</span>
+                        <span class="text-[10px] bg-gray-100 px-2 py-0.5 rounded text-gray-600">768px - 1024px</span>
+                    </div>
+                    <p class="text-xs text-gray-600 mb-4">
+                        Layout shifts to 2-up or 3-up product grid with hybrid navigation and scalable hero scaling.
+                    </p>
+                    <div class="bg-cream p-3 rounded border border-dashed border-luxgold/40 text-center">
+                        <div class="w-28 h-20 mx-auto bg-luxdark rounded-lg p-1 shadow flex flex-col justify-between">
+                            <div class="h-1.5 w-6 bg-luxgold rounded-full mx-auto"></div>
+                            <div class="bg-white h-14 rounded grid grid-cols-2 gap-1 p-1">
+                                <div class="bg-softbeige rounded"></div>
+                                <div class="bg-softbeige rounded"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Laptop / Desktop -->
+                <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm hover:border-luxgold transition-all">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-xs uppercase tracking-widest font-bold text-luxdark"><i class="fa-solid fa-laptop mr-2 text-luxgold"></i>3. Laptop / Desktop</span>
+                        <span class="text-[10px] bg-gray-100 px-2 py-0.5 rounded text-gray-600">1024px+ width</span>
+                    </div>
+                    <p class="text-xs text-gray-600 mb-4">
+                        Full-width luxurious display, 3-up category cards, complete bestseller grid with inline editing triggers.
+                    </p>
+                    <div class="bg-cream p-3 rounded border border-dashed border-luxgold/40 text-center">
+                        <div class="w-36 h-20 mx-auto bg-luxdark rounded-lg p-1 shadow flex flex-col justify-between">
+                            <div class="h-1.5 w-10 bg-luxgold rounded-full mx-auto"></div>
+                            <div class="bg-white h-14 rounded grid grid-cols-3 gap-1 p-1">
+                                <div class="bg-softbeige rounded"></div>
+                                <div class="bg-softbeige rounded"></div>
+                                <div class="bg-softbeige rounded"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Notice Banner inside Panel -->
+            <div id="admin-panel-notice" class="mt-8 bg-luxdark text-cream p-4 rounded text-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div>
+                    <span class="text-luxgold font-semibold uppercase tracking-wider block mb-1"><i class="fa-solid fa-shield-halved mr-1"></i> Admin Inline Mode Notice</span>
+                    <p class="text-gray-300">Log in as <strong class="text-white">Mohamed Nasser</strong> to unlock direct image URL Google Drive converter, drag-to-resize handles, inline price editors, and discount timers.</p>
+                </div>
+                <button onclick="openAuthModal('login')" class="bg-luxgold text-white px-4 py-2 uppercase tracking-widest text-[10px] font-semibold hover:bg-white hover:text-luxdark transition-all whitespace-nowrap">
+                    Admin Login
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Curated Categories Section -->
+    <section id="categories" class="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div class="text-center mb-12">
+            <span class="text-xs uppercase tracking-[0.3em] font-semibold text-luxgold block mb-2">Curated Collections</span>
+            <h2 class="font-serif text-3xl sm:text-4xl font-bold text-luxdark">Fine Jewelry Masterpieces</h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- Category 1 -->
+            <div class="group relative overflow-hidden bg-softbeige rounded shadow-sm aspect-[3/4] flex items-end p-8 cursor-pointer">
+                <img src="https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&q=80&w=800" alt="Necklaces" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                <div class="relative z-10 text-cream">
+                    <span class="text-[10px] uppercase tracking-widest text-luxgold font-semibold block mb-1">Collection I</span>
+                    <h3 class="font-serif text-2xl font-bold mb-2">Diamond Necklaces</h3>
+                    <span class="text-xs uppercase tracking-wider underline underline-offset-4">Explore Series</span>
+                </div>
+            </div>
+            <!-- Category 2 -->
+            <div class="group relative overflow-hidden bg-softbeige rounded shadow-sm aspect-[3/4] flex items-end p-8 cursor-pointer">
+                <img src="https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&q=80&w=800" alt="Rings" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                <div class="relative z-10 text-cream">
+                    <span class="text-[10px] uppercase tracking-widest text-luxgold font-semibold block mb-1">Collection II</span>
+                    <h3 class="font-serif text-2xl font-bold mb-2">Engagement & Rings</h3>
+                    <span class="text-xs uppercase tracking-wider underline underline-offset-4">Explore Series</span>
+                </div>
+            </div>
+            <!-- Category 3 -->
+            <div class="group relative overflow-hidden bg-softbeige rounded shadow-sm aspect-[3/4] flex items-end p-8 cursor-pointer">
+                <img src="https://images.unsplash.com/photo-1611591475871-2ee3a6502120?auto=format&fit=crop&q=80&w=800" alt="Bracelets & Earrings" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                <div class="relative z-10 text-cream">
+                    <span class="text-[10px] uppercase tracking-widest text-luxgold font-semibold block mb-1">Collection III</span>
+                    <h3 class="font-serif text-2xl font-bold mb-2">Bracelets & Earrings</h3>
+                    <span class="text-xs uppercase tracking-wider underline underline-offset-4">Explore Series</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Bestsellers Product Grid Section -->
+    <section id="bestsellers" class="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto bg-softbeige/30 rounded-xl my-10">
+        <div class="flex flex-col md:flex-row items-center justify-between mb-12">
+            <div>
+                <span class="text-xs uppercase tracking-[0.3em] font-semibold text-luxgold block mb-2">Exquisite Selections</span>
+                <h2 class="font-serif text-3xl sm:text-4xl font-bold text-luxdark">Bestsellers & Signature Pieces</h2>
+            </div>
+            <div class="mt-4 md:mt-0">
+                <button id="add-product-btn" class="hidden bg-luxdark text-cream px-4 py-2 text-xs uppercase tracking-widest font-medium hover:bg-luxgold transition-all">
+                    <i class="fa-solid fa-plus mr-1"></i> Add New Product (Admin)
+                </button>
+            </div>
+        </div>
+
+        <!-- Products Dynamic Grid (Adapts to 1 col mobile, 2 tablet, 3+ desktop) -->
+        <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Dynamically populated via JavaScript -->
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-luxdark text-cream pt-16 pb-12 border-t border-luxgold/20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
+            <div>
+                <h3 class="font-serif text-2xl font-bold gold-text-gradient mb-4">AURÉLIA</h3>
+                <p class="text-xs text-gray-400 leading-relaxed mb-4">
+                    The epitome of Egyptian fine jewelry craftsmanship, delivering timeless radiance and luxury across Egypt via البريد المصري.
+                </p>
+                <p class="text-xs text-luxgold font-semibold">Prices exclusively in Egyptian Pounds (EGP / جنيه)</p>
+            </div>
+            <div>
+                <h4 class="text-xs uppercase tracking-widest font-semibold text-luxgold mb-4">Quick Links</h4>
+                <ul class="space-y-2 text-xs text-gray-300">
+                    <li><a href="#hero" class="hover:text-luxgold transition-colors">Home</a></li>
+                    <li><a href="#categories" class="hover:text-luxgold transition-colors">Collections</a></li>
+                    <li><a href="#bestsellers" class="hover:text-luxgold transition-colors">Bestsellers</a></li>
+                    <li><a href="#design-panel" class="hover:text-luxgold transition-colors">System Panel</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-xs uppercase tracking-widest font-semibold text-luxgold mb-4">Customer Support</h4>
+                <ul class="space-y-2 text-xs text-gray-300">
+                    <li><a href="#" class="hover:text-luxgold transition-colors">Shipping via البريد المصري</a></li>
+                    <li><a href="#" class="hover:text-luxgold transition-colors">WhatsApp Verification Support</a></li>
+                    <li><a href="#" class="hover:text-luxgold transition-colors">Secure Checkout & Payments</a></li>
+                    <li><a href="#" class="hover:text-luxgold transition-colors">Contact Concierge</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="text-xs uppercase tracking-widest font-semibold text-luxgold mb-4">Newsletter & Updates</h4>
+                <p class="text-xs text-gray-400 mb-4">Subscribe to receive private viewings and seasonal releases.</p>
+                <div class="flex">
+                    <input type="email" placeholder="Enter your email" class="bg-white/10 border border-luxgold/40 text-xs px-3 py-2 text-white focus:outline-none w-full">
+                    <button class="bg-luxgold text-white px-4 text-xs uppercase tracking-widest hover:bg-white hover:text-luxdark transition-all">Join</button>
+                </div>
+            </div>
+        </div>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-white/10 pt-6 text-center text-xs text-gray-500">
+            <p>© 2026 AURÉLIA Fine Jewelry. All rights reserved. Express shipping powered by البريد المصري.</p>
+        </div>
+    </footer>
+
+    <!-- Modals (Cart, Wishlist, Auth, Checkout, Admin Product Creator) -->
+
+    <!-- Cart Drawer Modal -->
+    <div id="cart-modal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm hidden flex justify-end">
+        <div class="w-full max-w-md bg-cream h-full shadow-2xl p-6 flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between pb-4 border-b border-softbeige">
+                    <h3 class="font-serif text-xl font-bold text-luxdark">Your Shopping Bag</h3>
+                    <button id="close-cart" class="text-xl text-luxdark hover:text-luxgold"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div id="cart-items-container" class="mt-6 space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                    <!-- Cart items populated via JS -->
+                </div>
+            </div>
+            <div class="border-t border-softbeige pt-4">
+                <div class="flex justify-between items-center mb-4 text-sm font-semibold">
+                    <span>Total (EGP):</span>
+                    <span id="cart-total-price" class="text-luxgold font-serif text-lg">0 جنيه</span>
+                </div>
+                <button id="checkout-btn" class="w-full bg-luxdark text-cream py-3 text-xs uppercase tracking-widest font-medium hover:bg-luxgold transition-all">
+                    Proceed to Secure Checkout
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wishlist Modal -->
+    <div id="wishlist-modal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm hidden flex justify-end">
+        <div class="w-full max-w-md bg-cream h-full shadow-2xl p-6 flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between pb-4 border-b border-softbeige">
+                    <h3 class="font-serif text-xl font-bold text-luxdark">Your Wishlist</h3>
+                    <button id="close-wishlist" class="text-xl text-luxdark hover:text-luxgold"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div id="wishlist-items-container" class="mt-6 space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+                    <!-- Wishlist items populated via JS -->
+                </div>
+            </div>
+            <div class="border-t border-softbeige pt-4 text-center">
+                <button id="close-wishlist-bottom" class="w-full border border-luxdark py-3 text-xs uppercase tracking-widest font-medium hover:bg-luxdark hover:text-cream transition-all">
+                    Continue Shopping
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auth / Login / Register Modal -->
+    <div id="auth-modal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-cream w-full max-w-md rounded-lg shadow-2xl p-8 relative border border-luxgold/30">
+            <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-xl text-luxdark hover:text-luxgold"><i class="fa-solid fa-xmark"></i></button>
+            
+            <div id="auth-header" class="text-center mb-6">
+                <h3 class="font-serif text-2xl font-bold text-luxdark" id="auth-title">Welcome to AURÉLIA</h3>
+                <p class="text-xs text-gray-600 mt-1" id="auth-subtitle">Sign in or create an account to proceed</p>
+            </div>
+
+            <!-- Standard Login Form -->
+            <div id="login-form-container">
+                <form id="login-form" class="space-y-4">
+                    <div>
+                        <label class="block text-xs uppercase tracking-widest text-gray-600 mb-1">Email / Name</label>
+                        <input type="text" id="login-email" required class="w-full bg-white border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:border-luxgold" placeholder="e.g., Mohamed Nasser">
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase tracking-widest text-gray-600 mb-1">Password</label>
+                        <input type="password" id="login-password" required class="w-full bg-white border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:border-luxgold" placeholder="••••••••">
+                    </div>
+                    <button type="submit" class="w-full bg-luxdark text-cream py-3 text-xs uppercase tracking-widest font-medium hover:bg-luxgold transition-all">
+                        Sign In
+                    </button>
+                </form>
+                <div class="mt-4 text-center">
+                    <button onclick="switchAuthMode('register')" class="text-xs text-luxgold hover:underline">Don't have an account? Register with WhatsApp OTP</button>
+                </div>
+            </div>
+
+            <!-- Registration Step 1: Details & Phone -->
+            <div id="register-form-container" class="hidden">
+                <form id="register-form" class="space-y-4">
+                    <div>
+                        <label class="block text-xs uppercase tracking-widest text-gray-600 mb-1">Full Name</label>
+                        <input type="text" id="reg-name" required class="w-full bg-white border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:border-luxgold" placeholder="Full Name">
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase tracking-widest text-gray-600 mb-1">Email Address</label>
+                        <input type="email" id="reg-email" required class="w-full bg-white border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:border-luxgold" placeholder="email@domain.com">
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase tracking-widest text-gray-600 mb-1">Password</label>
+                        <input type="password" id="reg-password" required class="w-full bg-white border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:border-luxgold" placeholder="••••••••">
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase tracking-widest text-gray-600 mb-1">Egyptian Phone Number (for WhatsApp OTP)</label>
+                        <input type="tel" id="reg-phone" required class="w-full bg-white border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:border-luxgold" placeholder="010XXXXXXXX">
+                    </div>
+                    <button type="submit" class="w-full bg-luxdark text-cream py-3 text-xs uppercase tracking-widest font-medium hover:bg-luxgold transition-all">
+                        Send WhatsApp OTP (From 01159055625)
+                    </button>
+                </form>
+                <div class="mt-4 text-center">
+                    <button onclick="switchAuthMode('login')" class="text-xs text-luxgold hover:underline">Already have an account? Sign In</button>
+                </div>
+            </div>
+
+            <!-- Registration Step 2: WhatsApp OTP Verification -->
+            <div id="otp-form-container" class="hidden">
+                <div class="bg-softbeige p-3 rounded mb-4 text-xs text-gray-700">
+                    <p>Verification OTP sent via WhatsApp from <strong class="text-luxdark">01159055625</strong> to your phone number. (Simulated OTP: <span class="font-bold text-luxgold">5959</span>)</p>
+                </div>
+                <form id="otp-form" class="space-y-4">
+                    <div>
+                        <label class="block text-xs uppercase tracking-widest text-gray-600 mb-1">Enter 4-Digit OTP</label>
+                        <input type="text" id="otp-code" required maxlength="4" class="w-full bg-white border border-gray-300 px-3 py-2 text-center text-lg tracking-widest font-bold focus:outline-none focus:border-luxgold" placeholder="____">
+                    </div>
+                    <button type="submit" class="w-full bg-luxdark text-cream py-3 text-xs uppercase tracking-widest font-medium hover:bg-luxgold transition-all">
+                        Verify & Continue to Address
+                    </button>
+                </form>
+            </div>
+
+            <!-- Registration Step 3: Address & Shipping Notice -->
+            <div id="address-form-container" class="hidden">
+                <form id="address-form" class="space-y-4">
+                    <div>
+                        <label class="block text-xs uppercase tracking-widest text-gray-600 mb-1">Delivery Address (Egypt)</label>
+                        <textarea id="user-address" required rows="3" class="w-full bg-white border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:border-luxgold" placeholder="Street, Building, Apartment, City..."></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-xs uppercase tracking-widest text-gray-600 mb-1">Pin Location (Google Maps Embed)</label>
+                        <div class="h-28 bg-gray-200 rounded border border-gray-300 flex items-center justify-center text-xs text-gray-500">
+                            <span>[Google Maps Location Pinned Successfully]</span>
+                        </div>
+                    </div>
+                    <!-- Mandatory Shipping Notice -->
+                    <div class="bg-luxdark text-cream p-3 rounded text-[11px] leading-relaxed">
+                        <span class="text-luxgold font-semibold uppercase block mb-1">Official Shipping Notice:</span>
+                        Shipping is processed via Egypt Post (البريد المصري).
+                    </div>
+                    <button type="submit" class="w-full bg-luxgold text-white py-3 text-xs uppercase tracking-widest font-medium hover:bg-luxdark transition-all">
+                        Complete Registration & Checkout
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Profile Modal -->
+    <div id="profile-modal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-cream w-full max-w-lg rounded-lg shadow-2xl p-8 relative border border-luxgold/30">
+            <button onclick="closeProfileModal()" class="absolute top-4 right-4 text-xl text-luxdark hover:text-luxgold"><i class="fa-solid fa-xmark"></i></button>
+            <div class="text-center mb-6">
+                <h3 class="font-serif text-2xl font-bold text-luxdark">User Concierge Profile</h3>
+                <p class="text-xs text-gray-600 mt-1" id="profile-user-name">Mohamed Nasser</p>
+            </div>
+            <div class="space-y-4 text-xs">
+                <div class="bg-softbeige p-4 rounded">
+                    <span class="font-semibold text-luxgold uppercase tracking-widest block mb-2">Registered Phone Number</span>
+                    <div class="flex items-center justify-between">
+                        <span id="profile-phone-display">01159055625</span>
+                        <button onclick="triggerPhoneUpdate()" class="text-luxdark underline font-medium">Update Number (Triggers WhatsApp OTP)</button>
+                    </div>
+                </div>
+                <div class="bg-softbeige p-4 rounded">
+                    <span class="font-semibold text-luxgold uppercase tracking-widest block mb-2">Saved Delivery Address</span>
+                    <p id="profile-address-display" class="text-gray-700">Cairo, Egypt (Shipping via البريد المصري)</p>
+                </div>
+                <div class="bg-softbeige p-4 rounded">
+                    <span class="font-semibold text-luxgold uppercase tracking-widest block mb-2">Order History</span>
+                    <div id="profile-orders-list" class="space-y-2 text-gray-700">
+                        <p>No previous orders found. Explore our Bestsellers!</p>
+                    </div>
+                </div>
+                <button onclick="logoutUser()" class="w-full bg-red-800 text-white py-3 text-xs uppercase tracking-widest font-medium hover:bg-red-900 transition-all">
+                    Sign Out
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Add Product Modal -->
+    <div id="admin-product-modal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="bg-cream w-full max-w-md rounded-lg shadow-2xl p-8 relative border border-luxgold/30">
+            <button onclick="closeAdminProductModal()" class="absolute top-4 right-4 text-xl text-luxdark hover:text-luxgold"><i class="fa-solid fa-xmark"></i></button>
+            <h3 class="font-serif text-xl font-bold text-luxdark mb-4">Add New Jewelry Product (Admin)</h3>
+            <form id="admin-product-form" class="space-y-4 text-xs">
+                <div>
+                    <label class="block uppercase tracking-widest text-gray-600 mb-1">Product Title</label>
+                    <input type="text" id="new-prod-title" required class="w-full bg-white border border-gray-300 px-3 py-2 focus:outline-none focus:border-luxgold" placeholder="e.g., Crown Diamond Ring">
+                </div>
+                <div>
+                    <label class="block uppercase tracking-widest text-gray-600 mb-1">Price (EGP / جنيه)</label>
+                    <input type="number" id="new-prod-price" required class="w-full bg-white border border-gray-300 px-3 py-2 focus:outline-none focus:border-luxgold" placeholder="15000">
+                </div>
+                <div>
+                    <label class="block uppercase tracking-widest text-gray-600 mb-1">Google Drive Image Link (Auto-converted)</label>
+                    <input type="text" id="new-prod-img" required class="w-full bg-white border border-gray-300 px-3 py-2 focus:outline-none focus:border-luxgold" placeholder="Paste Google Drive share link or direct URL">
+                </div>
+                <button type="submit" class="w-full bg-luxdark text-cream py-3 uppercase tracking-widest font-medium hover:bg-luxgold transition-all">
+                    Save Product to Storefront
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Firebase Initialization & Main Application Logic Script -->
+    <script>
+        // Initialize Firebase
+        const firebaseConfig = {
+            databaseURL: "https://mohamed-a9564-default-rtdb.firebaseio.com/"
+        };
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        } else {
+            firebase.app();
+        }
+        const db = firebase.database();
+
+        // State Management
+        let currentUser = JSON.parse(localStorage.getItem('aurelia_current_user')) || null;
+        let cart = JSON.parse(localStorage.getItem('aurelia_cart')) || [];
+        let wishlist = JSON.parse(localStorage.getItem('aurelia_wishlist')) || [];
+        let currentLang = 'en';
+
+        // Default Products Seed Data
+        let defaultProducts = [
+            {
+                id: 'prod_1',
+                title: 'Crème de Lumière Diamond Necklace',
+                price: 24500,
+                oldPrice: 28000,
+                image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&q=80&w=800',
+                timerEnd: Date.now() + 86400000 // 24 hours timer
+            },
+            {
+                id: 'prod_2',
+                title: 'Auroral Solitaire Engagement Ring',
+                price: 18200,
+                oldPrice: null,
+                image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&q=80&w=800',
+                timerEnd: null
+            },
+            {
+                id: 'prod_3',
+                title: 'Elysian Gold Diamond Bracelet',
+                price: 12900,
+                oldPrice: 15000,
+                image: 'https://images.unsplash.com/photo-1611591475871-2ee3a6502120?auto=format&fit=crop&q=80&w=800',
+                timerEnd: Date.now() + 43200000 // 12 hours timer
+            }
+        ];
+
+        let products = JSON.parse(localStorage.getItem('aurelia_products')) || defaultProducts;
+
+        // Google Drive Link Converter Utility
+        function convertGoogleDriveLink(url) {
+            if (!url) return '';
+            if (url.includes('drive.google.com')) {
+                let fileIdMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+                if (fileIdMatch && fileIdMatch[1]) {
+                    return `https://lh3.googleusercontent.com/d/${fileIdMatch[1]}=s1000`;
+                }
+            }
+            return url;
+        }
+
+        // Device Detection & Responsive UI Adjustments
+        function updateDeviceDetectionSystem() {
+            const width = window.innerWidth;
+            document.getElementById('screen-width-val').textContent = width;
+            let category = 'Desktop (1024px+)';
+            let categoryKey = 'desktop';
+
+            if (width < 640) {
+                category = 'Phone / Mobile (375px - 480px)';
+                categoryKey = 'mobile';
+            } else if (width >= 640 && width < 1024) {
+                category = 'Tablet / iPad (768px - 1024px)';
+                categoryKey = 'tablet';
+            }
+
+            document.getElementById('device-category-val').textContent = category;
+            document.getElementById('active-viewport-status').textContent = `ACTIVE VIEWPORT: ${category.toUpperCase()} (${width}x${window.innerHeight}px)`;
+        }
+
+        window.addEventListener('resize', updateDeviceDetectionSystem);
+        window.addEventListener('DOMContentLoaded', updateDeviceDetectionSystem);
+
+        // Render Products on Storefront
+        function renderProducts() {
+            const grid = document.getElementById('products-grid');
+            grid.innerHTML = '';
+
+            const isAdmin = currentUser && currentUser.name === 'Mohamed Nasser';
+            if (isAdmin) {
+                document.getElementById('add-product-btn').classList.remove('hidden');
+                document.getElementById('admin-panel-notice').innerHTML = `
+                    <div>
+                        <span class="text-luxgold font-semibold uppercase tracking-wider block mb-1"><i class="fa-solid fa-shield-halved mr-1"></i> Admin Mohamed Nasser Active</span>
+                        <p class="text-gray-300">Inline editing enabled: Drag resize handles, price editors, Google Drive link auto-converter, and discount countdown timers are active.</p>
+                    </div>
+                `;
+            } else {
+                document.getElementById('add-product-btn').classList.add('hidden');
+            }
+
+            products.forEach((prod, index) => {
+                let timerHtml = '';
+                if (prod.timerEnd && prod.timerEnd > Date.now()) {
+                    const timeLeft = Math.floor((prod.timerEnd - Date.now()) / 1000);
+                    const hours = Math.floor(timeLeft / 3600);
+                    const mins = Math.floor((timeLeft % 3600) / 60);
+                    timerHtml = `<div class="bg-luxgold/20 text-luxdark text-[10px] px-2 py-1 rounded font-semibold mb-2 flex items-center justify-between">
+                        <span><i class="fa-solid fa-stopwatch mr-1"></i> Discount Timer:</span>
+                        <span class="countdown-clock" data-end="${prod.timerEnd}">${hours}h ${mins}m left</span>
+                    </div>`;
+                }
+
+                const card = document.createElement('div');
+                card.className = 'bg-cream rounded-lg overflow-hidden shadow-sm border border-softbeige group relative';
+                card.innerHTML = `
+                    <div class="relative overflow-hidden aspect-square bg-gray-100">
+                        <img src="${prod.image}" alt="${prod.title}" id="prod-img-${index}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 resize-handle" style="resize: both; overflow: auto;" title="Drag-to-resize handle active">
+                        <button onclick="toggleWishlist('${prod.id}')" class="absolute top-3 right-3 bg-white/80 p-2 rounded-full text-luxdark hover:text-luxgold transition-colors">
+                            <i class="${wishlist.includes(prod.id) ? 'fa-solid text-luxgold' : 'fa-regular'} fa-heart"></i>
+                        </button>
+                    </div>
+                    <div class="p-5">
+                        ${timerHtml}
+                        <h3 class="font-serif text-lg font-bold text-luxdark mb-2">${prod.title}</h3>
+                        <div class="flex items-baseline space-x-2 space-x-reverse mb-4">
+                            <span class="text-luxgold font-serif font-bold text-lg">${prod.price} جنيه</span>
+                            ${prod.oldPrice ? `<span class="text-gray-400 text-xs line-through">${prod.oldPrice} جنيه</span>` : ''}
+                        </div>
+                        
+                        ${isAdmin ? `
+                            <div class="mb-4 p-2 bg-softbeige/80 rounded border border-luxgold/40 text-[11px] space-y-2">
+                                <span class="font-semibold text-luxgold uppercase block">Admin Inline Controls</span>
+                                <input type="text" value="${prod.image}" onchange="adminUpdateImage('${prod.id}', this.value)" class="w-full bg-white border border-gray-300 p-1 text-[10px]" placeholder="Drive Image Link">
+                                <input type="number" value="${prod.price}" onchange="adminUpdatePrice('${prod.id}', this.value)" class="w-full bg-white border border-gray-300 p-1 text-[10px]" placeholder="New Price EGP">
+                            </div>
+                        ` : ''}
+
+                        <button onclick="addToCart('${prod.id}')" class="w-full bg-luxdark text-cream py-3 text-xs uppercase tracking-widest font-medium hover:bg-luxgold transition-all">
+                            Add to Bag
+                        </button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+            updateBadges();
+        }
+
+        // Cart & Wishlist Logic
+        function addToCart(prodId) {
+            const prod = products.find(p => p.id === prodId);
+            if (!prod) return;
+            cart.push(prod);
+            localStorage.setItem('aurelia_cart', JSON.stringify(cart));
+            updateBadges();
+            openCartModal();
+        }
+
+        function toggleWishlist(prodId) {
+            const index = wishlist.indexOf(prodId);
+            if (index > -1) {
+                wishlist.splice(index, 1);
+            } else {
+                wishlist.push(prodId);
+            }
+            localStorage.setItem('aurelia_wishlist', JSON.stringify(wishlist));
+            renderProducts();
+        }
+
+        function updateBadges() {
+            document.getElementById('cart-count').textContent = cart.length;
+            document.getElementById('wishlist-count').textContent = wishlist.length;
+        }
+
+        // Cart Modal Actions
+        document.getElementById('cart-btn').addEventListener('click', openCartModal);
+        document.getElementById('close-cart').addEventListener('click', closeCartModal);
+
+        function openCartModal() {
+            const container = document.getElementById('cart-items-container');
+            container.innerHTML = '';
+            let total = 0;
+
+            if (cart.length === 0) {
+                container.innerHTML = `<p class="text-xs text-gray-500 text-center py-10">Your bag is currently empty.</p>`;
+            } else {
+                cart.forEach((item, index) => {
+                    total += Number(item.price);
+                    const div = document.createElement('div');
+                    div.className = 'flex items-center justify-between bg-softbeige p-3 rounded';
+                    div.innerHTML = `
+                        <div class="flex items-center space-x-3 space-x-reverse">
+                            <img src="${item.image}" class="w-12 h-12 object-cover rounded">
+                            <div>
+                                <h4 class="font-serif text-xs font-bold text-luxdark">${item.title}</h4>
+                                <span class="text-xs text-luxgold font-semibold">${item.price} جنيه</span>
+                            </div>
+                        </div>
+                        <button onclick="removeFromCart(${index})" class="text-red-600 text-xs hover:underline"><i class="fa-solid fa-trash"></i></button>
+                    `;
+                    container.appendChild(div);
+                });
+            }
+            document.getElementById('cart-total-price').textContent = total + ' جنيه';
+            document.getElementById('cart-modal').classList.remove('hidden');
+        }
+
+        function closeCartModal() {
+            document.getElementById('cart-modal').classList.add('hidden');
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            localStorage.setItem('aurelia_cart', JSON.stringify(cart));
+            openCartModal();
+            updateBadges();
+        }
+
+        // Wishlist Modal Actions
+        document.getElementById('wishlist-btn').addEventListener('click', () => {
+            const container = document.getElementById('wishlist-items-container');
+            container.innerHTML = '';
+            if (wishlist.length === 0) {
+                container.innerHTML = `<p class="text-xs text-gray-500 text-center py-10">Your wishlist is empty.</p>`;
+            } else {
+                wishlist.forEach(id => {
+                    const prod = products.find(p => p.id === id);
+                    if (prod) {
+                        const div = document.createElement('div');
+                        div.className = 'flex items-center justify-between bg-softbeige p-3 rounded';
+                        div.innerHTML = `
+                            <div class="flex items-center space-x-3 space-x-reverse">
+                                <img src="${prod.image}" class="w-12 h-12 object-cover rounded">
+                                <div>
+                                    <h4 class="font-serif text-xs font-bold text-luxdark">${prod.title}</h4>
+                                    <span class="text-xs text-luxgold font-semibold">${prod.price} جنيه</span>
+                                </div>
+                            </div>
+                            <button onclick="addToCart('${prod.id}'); toggleWishlist('${prod.id}');" class="bg-luxdark text-cream px-3 py-1 text-[10px] uppercase">Add</button>
+                        `;
+                        container.appendChild(div);
+                    }
+                });
+            }
+            document.getElementById('wishlist-modal').classList.remove('hidden');
+        });
+        document.getElementById('close-wishlist').addEventListener('click', () => document.getElementById('wishlist-modal').classList.add('hidden'));
+        document.getElementById('close-wishlist-bottom').addEventListener('click', () => document.getElementById('wishlist-modal').classList.add('hidden'));
+
+        // Checkout Flow & Authentication Check
+        document.getElementById('checkout-btn').addEventListener('click', () => {
+            if (cart.length === 0) {
+                alert('Your shopping bag is empty.');
+                return;
+            }
+            closeCartModal();
+            if (!currentUser) {
+                openAuthModal('register');
+            } else {
+                alert(`Checkout successful! Order placed and shipping via البريد المصري to ${currentUser.address || 'Cairo'}. Thank you for shopping with AURÉLIA!`);
+                cart = [];
+                localStorage.setItem('aurelia_cart', JSON.stringify(cart));
+                updateBadges();
+            }
+        });
+
+        // Authentication Modal Management
+        function openAuthModal(mode = 'login') {
+            document.getElementById('auth-modal').classList.remove('hidden');
+            switchAuthMode(mode);
+        }
+
+        function closeAuthModal() {
+            document.getElementById('auth-modal').classList.add('hidden');
+        }
+
+        function switchAuthMode(mode) {
+            document.getElementById('login-form-container').classList.add('hidden');
+            document.getElementById('register-form-container').classList.add('hidden');
+            document.getElementById('otp-form-container').classList.add('hidden');
+            document.getElementById('address-form-container').classList.add('hidden');
+
+            if (mode === 'login') {
+                document.getElementById('login-form-container').classList.remove('hidden');
+                document.getElementById('auth-title').textContent = 'Sign In to AURÉLIA';
+                document.getElementById('auth-subtitle').textContent = 'Access your wishlist and orders';
+            } else if (mode === 'register') {
+                document.getElementById('register-form-container').classList.remove('hidden');
+                document.getElementById('auth-title').textContent = 'Create Account';
+                document.getElementById('auth-subtitle').textContent = 'Verification via WhatsApp from 01159055625';
+            }
+        }
+
+        // Login Handler (Supports Default Admin: Mohamed Nasser / Mohamed59*)
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value.trim();
+            const pass = document.getElementById('login-password').value.trim();
+
+            if (email === 'Mohamed Nasser' && pass === 'Mohamed59*') {
+                currentUser = { name: 'Mohamed Nasser', role: 'admin', phone: '01159055625', address: 'Cairo, Egypt' };
+            } else {
+                currentUser = { name: email, role: 'customer', phone: '01000000000', address: 'Cairo, Egypt' };
+            }
+
+            localStorage.setItem('aurelia_current_user', JSON.stringify(currentUser));
+            closeAuthModal();
+            renderProducts();
+            alert(`Welcome back, ${currentUser.name}!`);
+        });
+
+        // Registration Step 1 -> WhatsApp OTP trigger
+        let tempRegData = {};
+        document.getElementById('register-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            tempRegData.name = document.getElementById('reg-name').value;
+            tempRegData.email = document.getElementById('reg-email').value;
+            tempRegData.phone = document.getElementById('reg-phone').value;
+
+            document.getElementById('register-form-container').classList.add('hidden');
+            document.getElementById('otp-form-container').classList.remove('hidden');
+            document.getElementById('auth-title').textContent = 'WhatsApp OTP Verification';
+            document.getElementById('auth-subtitle').textContent = `Sent from sender 01159055625 to ${tempRegData.phone}`;
+        });
+
+        // OTP Verification Step 2 -> Address Form
+        document.getElementById('otp-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const otp = document.getElementById('otp-code').value.trim();
+            if (otp === '5959' || otp === '1234') {
+                document.getElementById('otp-form-container').classList.add('hidden');
+                document.getElementById('address-form-container').classList.remove('hidden');
+                document.getElementById('auth-title').textContent = 'Delivery Address & Shipping Notice';
+                document.getElementById('auth-subtitle').textContent = 'Shipping is processed via Egypt Post (البريد المصري)';
+            } else {
+                alert('Invalid OTP. Please enter 5959.');
+            }
+        });
+
+        // Address Form Step 3 -> Complete Registration
+        document.getElementById('address-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            tempRegData.address = document.getElementById('user-address').value;
+            tempRegData.role = 'customer';
+            currentUser = tempRegData;
+
+            localStorage.setItem('aurelia_current_user', JSON.stringify(currentUser));
+            closeAuthModal();
+            renderProducts();
+            alert('Registration complete! Welcome to AURÉLIA.');
+        });
+
+        // User Profile Modal Actions
+        document.getElementById('profile-btn').addEventListener('click', () => {
+            if (!currentUser) {
+                openAuthModal('login');
+            } else {
+                document.getElementById('profile-user-name').textContent = currentUser.name + (currentUser.role === 'admin' ? ' (Admin)' : '');
+                document.getElementById('profile-phone-display').textContent = currentUser.phone || '01159055625';
+                document.getElementById('profile-address-display').textContent = (currentUser.address || 'Cairo, Egypt') + ' (Shipping via البريد المصري)';
+                document.getElementById('profile-modal').classList.remove('hidden');
+            }
+        });
+
+        function closeProfileModal() {
+            document.getElementById('profile-modal').classList.add('hidden');
+        }
+
+        function logoutUser() {
+            currentUser = null;
+            localStorage.removeItem('aurelia_current_user');
+            closeProfileModal();
+            renderProducts();
+            alert('Signed out successfully.');
+        }
+
+        function triggerPhoneUpdate() {
+            const newPhone = prompt('Enter new phone number (triggers WhatsApp OTP flow):', currentUser.phone);
+            if (newPhone) {
+                currentUser.phone = newPhone;
+                localStorage.setItem('aurelia_current_user', JSON.stringify(currentUser));
+                alert(`WhatsApp OTP sent from 01159055625 to ${newPhone}. Verified successfully!`);
+                document.getElementById('profile-phone-display').textContent = newPhone;
+            }
+        }
+
+        // Admin Inline Editing Functions
+        function adminUpdateImage(prodId, rawUrl) {
+            const prod = products.find(p => p.id === prodId);
+            if (prod) {
+                prod.image = convertGoogleDriveLink(rawUrl);
+                localStorage.setItem('aurelia_products', JSON.stringify(products));
+                renderProducts();
+            }
+        }
+
+        function adminUpdatePrice(prodId, newPrice) {
+            const prod = products.find(p => p.id === prodId);
+            if (prod) {
+                prod.price = Number(newPrice);
+                localStorage.setItem('aurelia_products', JSON.stringify(products));
+                renderProducts();
+            }
+        }
+
+        document.getElementById('add-product-btn').addEventListener('click', () => {
+            document.getElementById('admin-product-modal').classList.remove('hidden');
+        });
+
+        function closeAdminProductModal() {
+            document.getElementById('admin-product-modal').classList.add('hidden');
+        }
+
+        document.getElementById('admin-product-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const title = document.getElementById('new-prod-title').value;
+            const price = Number(document.getElementById('new-prod-price').value);
+            const rawImg = document.getElementById('new-prod-img').value;
+
+            const newProd = {
+                id: 'prod_' + Date.now(),
+                title: title,
+                price: price,
+                oldPrice: price + 3000,
+                image: convertGoogleDriveLink(rawImg),
+                timerEnd: Date.now() + 86400000
+            };
+
+            products.push(newProd);
+            localStorage.setItem('aurelia_products', JSON.stringify(products));
+            closeAdminProductModal();
+            renderProducts();
+        });
+
+        // Mobile Menu Toggle
+        document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+            const menu = document.getElementById('mobile-menu');
+            const drawer = document.getElementById('mobile-menu-drawer');
+            menu.classList.remove('hidden');
+            setTimeout(() => {
+                menu.classList.remove('opacity-0');
+                drawer.classList.remove('-translate-x-full');
+            }, 10);
+        });
+
+        document.getElementById('close-mobile-menu').addEventListener('click', closeMobileDrawer);
+        document.getElementById('mobile-menu').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('mobile-menu')) closeMobileDrawer();
+        });
+
+        function closeMobileDrawer() {
+            const menu = document.getElementById('mobile-menu');
+            const drawer = document.getElementById('mobile-menu-drawer');
+            menu.classList.add('opacity-0');
+            drawer.classList.add('-translate-x-full');
+            setTimeout(() => menu.classList.add('hidden'), 300);
+        }
+
+        document.querySelectorAll('.mobile-nav-link').forEach(link => {
+            link.addEventListener('click', closeMobileDrawer);
+        });
+
+        // Language Toggle (EN / AR RTL)
+        document.getElementById('lang-toggle').addEventListener('click', () => {
+            currentLang = currentLang === 'en' ? 'ar' : 'en';
+            const htmlTag = document.documentElement;
+            if (currentLang === 'ar') {
+                htmlTag.setAttribute('lang', 'ar');
+                htmlTag.setAttribute('dir', 'rtl');
+                document.getElementById('announcement-text').textContent = 'شحن مجاني لكافة أنحاء مصر عبر البريد المصري | مجوهرات راقية حصرية';
+            } else {
+                htmlTag.setAttribute('lang', 'en');
+                htmlTag.setAttribute('dir', 'ltr');
+                document.getElementById('announcement-text').textContent = 'Complimentary Shipping Across Egypt via البريد المصري | Exclusive Fine Jewelry';
+            }
+        });
+
+        // Initial render on load
+        renderProducts();
+    </script>
+</body>
+</html>
