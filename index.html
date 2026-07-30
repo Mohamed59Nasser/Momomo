@@ -1,610 +1,2160 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AURÉLIA - لوحة الإدارة والتشغيل المركزية</title>
-    <!-- Tailwind CSS -->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#fbf5ea" />
+    <title>Maison Nasser Luxury Commerce System</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Cairo:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        luxury: {
-                            gold: '#c5a059',
-                            dark: '#1a1a1a',
-                            cream: '#f9f6f0',
-                            sand: '#e8e2d2',
-                            accent: '#8c6d36'
-                        }
-                    },
-                    fontFamily: {
-                        sans: ['Cairo', 'sans-serif'],
-                        serif: ['Playfair Display', 'serif']
-                    }
-                }
-            }
-        }
-    </script>
-</head>
-<body class="bg-luxury-cream text-luxury-dark font-sans antialiased min-h-screen">
+    <style>
+      :root {
+        --ink: #2a1f16;
+        --deep: #22170f;
+        --cream: #fbf5ea;
+        --ivory: #fff8ec;
+        --sand: #efe3cf;
+        --line: #dfcfb2;
+        --gold: #d8b86a;
+        --gold-dark: #9b6b1f;
+        --muted: #6b5739;
+        --vh: 1vh;
+      }
 
-    <!-- Login Screen -->
-    <div id="loginScreen" class="fixed inset-0 z-50 flex items-center justify-center bg-luxury-dark/90 backdrop-blur-md">
-        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border border-luxury-gold/30">
-            <div class="text-center mb-8">
-                <h1 class="font-serif text-3xl font-bold tracking-wider text-luxury-dark">AURÉLIA</h1>
-                <p class="text-sm text-gray-500 mt-2">نظام الإدارة والتشغيل المركزي للمتجر</p>
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        background: var(--cream);
+        color: var(--ink);
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+
+      button,
+      input,
+      select,
+      textarea,
+      a {
+        font: inherit;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      button,
+      a {
+        cursor: pointer;
+      }
+
+      img {
+        display: block;
+        max-width: 100%;
+      }
+
+      @keyframes heroDrift {
+        from {
+          transform: scale(1) translate3d(0, 0, 0);
+        }
+        to {
+          transform: scale(1.08) translate3d(-1.5%, -1%, 0);
+        }
+      }
+
+      @keyframes riseIn {
+        from {
+          opacity: 0;
+          transform: translateY(34px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes fadeInSlow {
+        from {
+          opacity: 0;
+          transform: translateY(18px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes softPop {
+        from {
+          opacity: 0;
+          transform: scale(0.96);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      @keyframes liquidFloat {
+        0% {
+          transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+          border-radius: 42% 58% 62% 38% / 42% 40% 60% 58%;
+        }
+        50% {
+          transform: translate3d(6vw, -4vh, 0) scale(1.14) rotate(16deg);
+          border-radius: 58% 42% 38% 62% / 55% 65% 35% 45%;
+        }
+        100% {
+          transform: translate3d(-4vw, 5vh, 0) scale(0.96) rotate(-10deg);
+          border-radius: 48% 52% 66% 34% / 40% 58% 42% 60%;
+        }
+      }
+
+      .hero-bg {
+        animation: heroDrift 18s ease-in-out infinite alternate;
+      }
+
+      .rise-in {
+        animation: riseIn 900ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+      }
+
+      .fade-in-slow {
+        animation: fadeInSlow 1100ms ease both;
+        animation-delay: 180ms;
+      }
+
+      .soft-pop {
+        animation: softPop 800ms ease both;
+        animation-delay: 360ms;
+      }
+
+      .liquid-field {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
+        overflow: hidden;
+        mix-blend-mode: screen;
+      }
+
+      .liquid-blob {
+        position: absolute;
+        width: clamp(180px, 24vw, 420px);
+        aspect-ratio: 1;
+        filter: blur(18px);
+        opacity: 0.36;
+        animation: liquidFloat 14s ease-in-out infinite alternate;
+      }
+
+      .liquid-blob.one {
+        left: 4%;
+        bottom: 12%;
+        background: radial-gradient(circle at 35% 30%, #fff4c8, #d8b86a 42%, transparent 72%);
+      }
+
+      .liquid-blob.two {
+        right: 8%;
+        top: 16%;
+        background: radial-gradient(circle at 40% 40%, #ffe8d7, #b76e79 38%, transparent 74%);
+        animation-delay: -5s;
+      }
+
+      .liquid-blob.three {
+        right: 34%;
+        bottom: -10%;
+        background: radial-gradient(circle at 45% 38%, #fff8ec, #9b6b1f 42%, transparent 76%);
+        animation-delay: -9s;
+      }
+
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        border: 0;
+        border-radius: 999px;
+        padding: 0.72rem 1.1rem;
+        color: var(--ivory);
+        background: var(--ink);
+        font-size: 0.9rem;
+        font-weight: 800;
+        text-decoration: none;
+        transition: transform 240ms ease, filter 240ms ease, background 240ms ease, border 240ms ease;
+      }
+
+      .btn:hover {
+        transform: translateY(-1px);
+      }
+
+      .btn:disabled {
+        cursor: not-allowed;
+        opacity: 0.48;
+        transform: none;
+      }
+
+      .btn-gold {
+        color: var(--deep);
+        background: linear-gradient(90deg, var(--gold-dark), var(--gold), #fff0ad);
+      }
+
+      .btn-light {
+        color: var(--ink);
+        background: var(--ivory);
+      }
+
+      .btn-ghost {
+        color: var(--ink);
+        border: 1px solid rgba(155, 107, 31, 0.38);
+        background: transparent;
+      }
+
+      .btn-danger {
+        background: #6e241f;
+      }
+
+      .language-btn {
+        min-width: 92px;
+      }
+
+      .field,
+      .select,
+      .textarea {
+        width: 100%;
+        min-height: 44px;
+        border: 1px solid #d9c8aa;
+        border-radius: 1rem;
+        outline: none;
+        background: rgba(255, 255, 255, 0.82);
+        color: var(--ink);
+        padding: 0.8rem 0.95rem;
+        transition: border 200ms ease, box-shadow 200ms ease;
+      }
+
+      .textarea {
+        min-height: 106px;
+        resize: vertical;
+      }
+
+      .field:focus,
+      .select:focus,
+      .textarea:focus {
+        border-color: var(--gold-dark);
+        box-shadow: 0 0 0 4px rgba(216, 184, 106, 0.2);
+      }
+
+      .label {
+        display: block;
+        color: #8a6a30;
+        font-size: 0.72rem;
+        font-weight: 900;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: 1.65rem;
+        background: rgba(255, 255, 255, 0.7);
+        box-shadow: 0 14px 40px rgba(153, 112, 50, 0.08);
+        padding: clamp(1rem, 2.3vw, 1.45rem);
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        border: 1px solid rgba(216, 184, 106, 0.45);
+        border-radius: 999px;
+        background: rgba(255, 248, 236, 0.78);
+        color: #5a421e;
+        padding: 0.4rem 0.7rem;
+        font-size: 0.78rem;
+        font-weight: 800;
+        text-transform: capitalize;
+        backdrop-filter: blur(12px);
+      }
+
+      .dot {
+        width: 0.55rem;
+        height: 0.55rem;
+        border-radius: 999px;
+        background: #ef4444;
+      }
+
+      .dot.online {
+        background: #10b981;
+      }
+
+      .dot.saving,
+      .dot.loading {
+        background: #f59e0b;
+      }
+
+      .hero {
+        position: relative;
+        min-height: calc(var(--vh, 1vh) * 100);
+        overflow: hidden;
+        background: var(--deep);
+        color: var(--ivory);
+      }
+
+      .hero-bg,
+      .hero-shade {
+        position: absolute;
+        inset: 0;
+      }
+
+      .hero-bg {
+        background-position: center;
+        background-size: cover;
+      }
+
+      .hero-shade {
+        background: linear-gradient(90deg, rgba(29, 19, 13, 0.9), rgba(59, 43, 29, 0.48), rgba(241, 220, 169, 0.12));
+      }
+
+      .topbar {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: clamp(1rem, 2.5vw, 1.6rem) clamp(1rem, 4vw, 3rem);
+      }
+
+      .brand-button {
+        border: 0;
+        background: transparent;
+        color: var(--ivory);
+        font-size: 0.8rem;
+        font-weight: 900;
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+      }
+
+      .hero-content {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        min-height: calc(var(--vh, 1vh) * 82);
+        padding: 3rem clamp(1rem, 4vw, 3rem) 5rem;
+      }
+
+      .hero-copy {
+        max-width: 1000px;
+      }
+
+      .hero-title {
+        margin: 0;
+        color: #fff6df;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: clamp(3.7rem, 12vw, 8.8rem);
+        font-weight: 650;
+        line-height: 0.88;
+        letter-spacing: 0.075em;
+        text-transform: uppercase;
+      }
+
+      .hero-line {
+        max-width: 720px;
+        margin: 2rem 0 0;
+        color: #f7ead2;
+        font-size: clamp(1.55rem, 3.6vw, 3.2rem);
+        line-height: 1.08;
+      }
+
+      .hero-text {
+        max-width: 610px;
+        margin: 1.25rem 0 0;
+        color: #f2dec0;
+        font-size: 1.05rem;
+        line-height: 1.75;
+      }
+
+      .action-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 2rem;
+      }
+
+      .home-grid {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: clamp(1.7rem, 4vw, 3rem);
+        max-width: 1380px;
+        margin: 0 auto;
+        padding: clamp(3.5rem, 7vw, 6rem) clamp(1rem, 4vw, 3rem);
+      }
+
+      .span-full,
+      .span-wide,
+      .span-compact,
+      .span-half {
+        grid-column: span 12;
+      }
+
+      .section-title {
+        max-width: 680px;
+        margin-bottom: 2rem;
+      }
+
+      .section-title h2 {
+        margin: 0;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: clamp(2.2rem, 5vw, 4rem);
+        font-weight: 650;
+        letter-spacing: -0.03em;
+      }
+
+      .section-title p {
+        margin: 1rem 0 0;
+        color: var(--muted);
+        line-height: 1.75;
+      }
+
+      .filter-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.7rem;
+        margin-bottom: 2rem;
+      }
+
+      .product-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
+        gap: 2rem;
+      }
+
+      .product-tile {
+        border: 0;
+        background: transparent;
+        color: inherit;
+        padding: 0;
+        text-align: left;
+      }
+
+      .product-image {
+        aspect-ratio: 4 / 5;
+        overflow: hidden;
+        border-radius: 1.75rem;
+        background: var(--sand);
+      }
+
+      .product-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 700ms ease;
+      }
+
+      .product-tile:hover img {
+        transform: scale(1.055);
+      }
+
+      .product-name {
+        margin: 0.5rem 0 0;
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 1.55rem;
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      .small {
+        font-size: 0.88rem;
+      }
+
+      .price-row,
+      .stock-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 0.85rem;
+      }
+
+      .price {
+        color: var(--ink);
+        font-size: 1.08rem;
+        font-weight: 900;
+      }
+
+      .strike {
+        color: #8f7c62;
+        text-decoration: line-through;
+      }
+
+      .media-plane {
+        overflow: hidden;
+        border-radius: 1.8rem;
+        background: var(--sand);
+      }
+
+      .media-plane img {
+        width: 100%;
+        height: min(52vw, 450px);
+        object-fit: cover;
+        transition: transform 700ms ease;
+      }
+
+      .media-plane:hover img {
+        transform: scale(1.04);
+      }
+
+      .modal {
+        position: fixed;
+        inset: 0;
+        z-index: 50;
+        display: flex;
+        align-items: end;
+        justify-content: center;
+        background: rgba(29, 19, 13, 0.62);
+        padding: 0.8rem;
+        backdrop-filter: blur(10px);
+      }
+
+      .modal-box {
+        width: min(1120px, 100%);
+        max-height: 92vh;
+        overflow: auto;
+        border-radius: 1.8rem;
+        background: var(--ivory);
+        padding: clamp(1rem, 3vw, 2rem);
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.3);
+      }
+
+      .modal-grid {
+        display: grid;
+        gap: 2rem;
+      }
+
+      .admin-shell {
+        display: grid;
+        min-height: 100vh;
+        background: #f6eddd;
+      }
+
+      .sidebar {
+        display: none;
+        background: #251b13;
+        color: var(--ivory);
+        padding: 1.5rem;
+      }
+
+      .admin-main {
+        min-width: 0;
+        padding: clamp(1rem, 3vw, 2rem);
+      }
+
+      .admin-head {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        margin-bottom: 1rem;
+      }
+
+      .nav-list,
+      .tabs {
+        display: flex;
+        gap: 0.55rem;
+      }
+
+      .nav-list {
+        flex-direction: column;
+      }
+
+      .tabs {
+        overflow-x: auto;
+        padding-bottom: 0.6rem;
+      }
+
+      .nav-btn {
+        width: 100%;
+        border: 0;
+        border-radius: 1rem;
+        background: transparent;
+        color: #ead9bd;
+        padding: 0.85rem 1rem;
+        text-align: left;
+        font-weight: 850;
+      }
+
+      .nav-btn.active {
+        background: var(--ivory);
+        color: var(--deep);
+      }
+
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+        gap: 1rem;
+      }
+
+      .two-grid,
+      .three-grid,
+      .form-grid {
+        display: grid;
+        gap: 1rem;
+      }
+
+      .item-list {
+        display: grid;
+        gap: 1rem;
+      }
+
+      .split-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+
+      .pill-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.55rem;
+      }
+
+      .pill {
+        border-radius: 999px;
+        background: #f4ead9;
+        color: #5f4b31;
+        padding: 0.45rem 0.75rem;
+        font-size: 0.85rem;
+        font-weight: 750;
+      }
+
+      .barcode-box {
+        border-radius: 1.1rem;
+        background: #fff;
+        padding: 0.75rem;
+      }
+
+      .barcode {
+        width: 100%;
+        max-width: 240px;
+        height: 74px;
+      }
+
+      .color-dot {
+        display: inline-block;
+        width: 1.2rem;
+        height: 1.2rem;
+        border: 1px solid #c9ad72;
+        border-radius: 999px;
+        vertical-align: middle;
+      }
+
+      .drag-list {
+        display: grid;
+        gap: 0.75rem;
+      }
+
+      .drag-item {
+        touch-action: none;
+        border: 1px solid rgba(216, 184, 106, 0.45);
+        border-radius: 1.3rem;
+        background: var(--ivory);
+        padding: 1rem;
+        transition: transform 200ms ease, border 200ms ease, box-shadow 200ms ease;
+      }
+
+      .drag-item.dragging {
+        border-color: var(--gold-dark);
+        box-shadow: 0 18px 48px rgba(153, 112, 50, 0.18);
+        transform: scale(1.02);
+      }
+
+      .layout-preview {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 0.7rem;
+      }
+
+      .preview-block {
+        min-height: 110px;
+        border-radius: 1.3rem;
+        background: linear-gradient(135deg, var(--ivory), #ead4aa);
+        padding: 1rem;
+      }
+
+      .login-page {
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        background: radial-gradient(circle at top, #fff3c4, var(--cream) 42%, #e9dac0);
+        padding: 1rem;
+      }
+
+      .login-page .panel {
+        position: relative;
+        z-index: 2;
+      }
+
+      [dir="rtl"] body {
+        font-family: Tahoma, Arial, ui-sans-serif, system-ui, sans-serif;
+      }
+
+      [dir="rtl"] .product-tile,
+      [dir="rtl"] .nav-btn {
+        text-align: right;
+      }
+
+      [dir="rtl"] .label,
+      [dir="rtl"] .brand-button {
+        letter-spacing: 0.06em;
+      }
+
+      .notice,
+      .error,
+      .success {
+        border-radius: 1rem;
+        padding: 0.8rem 0.95rem;
+        font-size: 0.9rem;
+        line-height: 1.5;
+      }
+
+      .notice {
+        background: #f7ecd8;
+        color: #5f4b31;
+      }
+
+      .error {
+        background: #fff1f2;
+        color: #9f1239;
+      }
+
+      .success {
+        background: #ecfdf5;
+        color: #065f46;
+      }
+
+      footer {
+        border-top: 1px solid #e1d2b7;
+        padding: 1.5rem clamp(1rem, 4vw, 3rem);
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      @media (min-width: 720px) {
+        .form-grid,
+        .two-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .three-grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .modal {
+          align-items: center;
+        }
+
+        .modal-grid {
+          grid-template-columns: 0.9fr 1.1fr;
+        }
+
+        .admin-head {
+          flex-direction: row;
+          align-items: center;
+          justify-content: space-between;
+        }
+      }
+
+      @media (min-width: 1024px) {
+        .span-wide {
+          grid-column: span 8;
+        }
+
+        .span-compact {
+          grid-column: span 4;
+        }
+
+        .span-half {
+          grid-column: span 6;
+        }
+
+        .admin-shell {
+          grid-template-columns: 280px minmax(0, 1fr);
+        }
+
+        .sidebar {
+          display: block;
+        }
+
+        .tabs {
+          display: none;
+        }
+
+        .two-wide {
+          grid-template-columns: 1.25fr 0.75fr;
+        }
+      }
+
+      @media (max-width: 560px) {
+        .topbar {
+          align-items: flex-start;
+        }
+
+        .topbar .status {
+          display: none;
+        }
+
+        .hero-title {
+          font-size: 3.15rem;
+        }
+
+        .action-row .btn {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <script>
+      const FIREBASE_URL = "https://mohamed-a9564-default-rtdb.firebaseio.com";
+      const DAY_MS = 24 * 60 * 60 * 1000;
+      const HERO_IMAGE = "https://images.pexels.com/photos/4938198/pexels-photo-4938198.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=900&w=1600";
+      const COSMETIC_IMAGE = "https://images.pexels.com/photos/4202329/pexels-photo-4202329.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=900&w=1600";
+      const PERFUME_IMAGE = "https://images.pexels.com/photos/12402358/pexels-photo-12402358.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=900&w=1600";
+      const EARRINGS_IMAGE = "https://images.pexels.com/photos/4938267/pexels-photo-4938267.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=900&w=1600";
+
+      const app = document.getElementById("app");
+      const nowIso = () => new Date().toISOString();
+
+      const seedLayout = {
+        heroImage: HERO_IMAGE,
+        sections: [
+          { id: "collection", label: "Collection", span: "wide" },
+          { id: "offers", label: "Timed offers", span: "compact" },
+          { id: "ritual", label: "Beauty ritual", span: "half" },
+          { id: "atelier", label: "Atelier promise", span: "half" }
+        ]
+      };
+
+      const seedData = {
+        categories: [
+          {
+            id: "cat-jewelry",
+            name: "Jewelry",
+            subcategories: [
+              { id: "sub-necklaces", name: "Necklaces" },
+              { id: "sub-rings", name: "Rings" },
+              { id: "sub-bracelets", name: "Bracelets" }
+            ]
+          },
+          {
+            id: "cat-makeup",
+            name: "Makeup",
+            subcategories: [
+              { id: "sub-lips", name: "Lips" },
+              { id: "sub-fragrance", name: "Fragrance" },
+              { id: "sub-skincare", name: "Skincare" }
+            ]
+          }
+        ],
+        products: [
+          {
+            id: "prod-pearl-necklace",
+            name: "Aurora Pearl Necklace",
+            image: HERO_IMAGE,
+            categoryId: "cat-jewelry",
+            subcategoryId: "sub-necklaces",
+            basePrice: 2400,
+            promoPrice: 1890,
+            offerEndsAt: new Date(Date.now() + 7 * DAY_MS).toISOString(),
+            internalStock: 7,
+            marketingThreshold: 5,
+            barcode: "MN-JWL-NEC-0001",
+            colors: [
+              { id: "color-pearl", name: "Pearl White", hex: "#f7efe0", quantity: 3 },
+              { id: "color-champagne", name: "Champagne Gold", hex: "#d8b86a", quantity: 4 }
+            ],
+            createdAt: nowIso()
+          },
+          {
+            id: "prod-diamond-ring",
+            name: "Nocturne Diamond Ring",
+            image: EARRINGS_IMAGE,
+            categoryId: "cat-jewelry",
+            subcategoryId: "sub-rings",
+            basePrice: 3650,
+            promoPrice: null,
+            offerEndsAt: null,
+            internalStock: 4,
+            marketingThreshold: 3,
+            barcode: "MN-JWL-RNG-0002",
+            colors: [
+              { id: "color-rose-gold", name: "Rose Gold", hex: "#b76e79", quantity: 2 },
+              { id: "color-white-gold", name: "White Gold", hex: "#e8e5df", quantity: 2 }
+            ],
+            createdAt: nowIso()
+          },
+          {
+            id: "prod-rose-lip",
+            name: "Gilded Rose Lip Veil",
+            image: COSMETIC_IMAGE,
+            categoryId: "cat-makeup",
+            subcategoryId: "sub-lips",
+            basePrice: 320,
+            promoPrice: 260,
+            offerEndsAt: new Date(Date.now() + 7 * DAY_MS).toISOString(),
+            internalStock: 12,
+            marketingThreshold: 5,
+            barcode: "MN-BTY-LIP-0003",
+            colors: [
+              { id: "color-rose", name: "Rose Satin", hex: "#b85c68", quantity: 6 },
+              { id: "color-nude", name: "Nude Silk", hex: "#c79b7a", quantity: 6 }
+            ],
+            createdAt: nowIso()
+          },
+          {
+            id: "prod-amber-perfume",
+            name: "Amber No. 9 Perfume",
+            image: PERFUME_IMAGE,
+            categoryId: "cat-makeup",
+            subcategoryId: "sub-fragrance",
+            basePrice: 610,
+            promoPrice: null,
+            offerEndsAt: null,
+            internalStock: 9,
+            marketingThreshold: 4,
+            barcode: "MN-BTY-FRG-0004",
+            colors: [{ id: "color-amber", name: "Amber Glass", hex: "#c08a39", quantity: 9 }],
+            createdAt: nowIso()
+          }
+        ],
+        customers: [
+          {
+            id: "cus-laila",
+            name: "Laila Hassan",
+            email: "laila@example.com",
+            phones: ["+20 100 222 3344", "+20 122 555 8181"],
+            addresses: ["Villa 18, Fifth Settlement, Cairo", "North Coast summer address"],
+            createdAt: nowIso()
+          }
+        ],
+        orders: [
+          {
+            id: "ord-preview",
+            productId: "prod-pearl-necklace",
+            productType: "Jewelry / Necklaces",
+            productName: "Aurora Pearl Necklace",
+            barcode: "MN-JWL-NEC-0001",
+            color: "Champagne Gold",
+            quantity: 1,
+            customerId: "cus-laila",
+            customerName: "Laila Hassan",
+            phone: "+20 100 222 3344",
+            address: "Villa 18, Fifth Settlement, Cairo",
+            unitPrice: 1890,
+            discountCode: "GOLD10",
+            discountAmount: 189,
+            total: 1701,
+            status: "preparing",
+            createdAt: new Date(Date.now() - DAY_MS).toISOString()
+          }
+        ],
+        discountCodes: [
+          { id: "disc-gold10", code: "GOLD10", percent: 10, usageLimit: 20, used: 3, active: true, createdAt: nowIso() }
+        ],
+        admins: [],
+        layout: seedLayout
+      };
+
+      const state = {
+        view: "store",
+        tab: "overview",
+        lang: localStorage.getItem("mn-language") === "ar" ? "ar" : "en",
+        session: null,
+        data: JSON.parse(JSON.stringify(seedData)),
+        selectedProductId: null,
+        categoryFilter: "all",
+        productEditId: null,
+        draggingSectionId: null,
+        message: "",
+        status: {
+          phase: "loading",
+          message: "Connecting to Firebase Realtime Database",
+          lastSync: "Not synced yet",
+          realtime: false
+        },
+        device: detectDevice()
+      };
+
+      const localNames = {
+        categories: {
+          "cat-jewelry": "المجوهرات",
+          "cat-makeup": "مستحضرات التجميل"
+        },
+        subcategories: {
+          "sub-necklaces": "عقود",
+          "sub-rings": "خواتم",
+          "sub-bracelets": "أساور",
+          "sub-lips": "شفاه",
+          "sub-fragrance": "عطور",
+          "sub-skincare": "العناية بالبشرة"
+        },
+        products: {
+          "prod-pearl-necklace": "عقد أورورا لؤلؤ",
+          "prod-diamond-ring": "خاتم نوكتورن ألماس",
+          "prod-rose-lip": "روج روز الذهبي",
+          "prod-amber-perfume": "عطر أمبر رقم 9"
+        },
+        colors: {
+          "color-pearl": "أبيض لؤلؤي",
+          "color-champagne": "ذهبي شامبانيا",
+          "color-rose-gold": "روز جولد",
+          "color-white-gold": "ذهب أبيض",
+          "color-rose": "روز ساتان",
+          "color-nude": "نود حريري",
+          "color-amber": "زجاج كهرماني"
+        },
+        sections: {
+          collection: "المجموعة",
+          offers: "عروض مؤقتة",
+          ritual: "روتين الجمال",
+          atelier: "وعد الأتيليه"
+        },
+        tabs: {
+          overview: "نظرة عامة",
+          categories: "الأقسام",
+          products: "المنتجات",
+          inventory: "المخزون",
+          orders: "الطلبات",
+          customers: "العملاء",
+          discounts: "الخصومات",
+          admins: "مديرون فرعيون",
+          layout: "التنسيق",
+          sync: "فايربيز"
+        },
+        orderStatuses: {
+          pending: "قيد الانتظار",
+          preparing: "قيد التجهيز",
+          shipped: "تم الشحن",
+          completed: "مكتمل",
+          cancelled: "ملغي"
+        },
+        spans: {
+          full: "كامل",
+          wide: "واسع",
+          compact: "مضغوط",
+          half: "نصف"
+        }
+      };
+
+      function copy(en, ar) {
+        return state.lang === "ar" ? ar : en;
+      }
+
+      function languageButton() {
+        return `<button class="btn btn-ghost language-btn" data-action="toggle-language" type="button">${copy("العربية", "English")}</button>`;
+      }
+
+      function applyLanguageFrame() {
+        document.documentElement.lang = state.lang;
+        document.documentElement.dir = state.lang === "ar" ? "rtl" : "ltr";
+        document.title = copy("Maison Nasser Luxury Commerce System", "Maison Nasser | نظام تجارة فاخر");
+      }
+
+      function nameIn(collection, item) {
+        if (!item) return "";
+        const arabicValue = item.nameAr || localNames[collection]?.[item.id];
+        return state.lang === "ar" && arabicValue ? arabicValue : item.name;
+      }
+
+      function productTitle(product) {
+        return state.lang === "ar" && localNames.products[product.id] ? localNames.products[product.id] : product.name;
+      }
+
+      function colorTitle(color) {
+        return state.lang === "ar" && localNames.colors[color.id] ? localNames.colors[color.id] : color.name;
+      }
+
+      function tabLabel(id, label) {
+        return state.lang === "ar" ? localNames.tabs[id] || label : label;
+      }
+
+      function sectionLabel(section) {
+        return state.lang === "ar" ? localNames.sections[section.id] || section.label : section.label;
+      }
+
+      function spanLabel(span) {
+        return state.lang === "ar" ? localNames.spans[span] || span : span;
+      }
+
+      function orderStatusLabel(status) {
+        return state.lang === "ar" ? localNames.orderStatuses[status] || status : status;
+      }
+
+      function deviceLabel(type) {
+        return copy(type, { mobile: "موبايل", tablet: "تابلت", desktop: "كمبيوتر" }[type] || type);
+      }
+
+      function phaseLabel(phase) {
+        const labels = {
+          loading: copy("connecting", "جاري الاتصال"),
+          online: copy("online", "متصل"),
+          saving: copy("saving", "جاري الحفظ"),
+          offline: copy("offline", "غير متصل")
+        };
+        return labels[phase] || phase;
+      }
+
+      function messageClass(message) {
+        return String(message || "").startsWith("Error") || String(message || "").startsWith("خطأ") ? "error" : "success";
+      }
+
+      function esc(value) {
+        return String(value ?? "").replace(/[&<>"']/g, function (char) {
+          return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char];
+        });
+      }
+
+      function uid(prefix) {
+        return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+      }
+
+      function money(value) {
+        const locale = state.lang === "ar" ? "ar-EG" : "en-US";
+        return new Intl.NumberFormat(locale, { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(Number(value) || 0);
+      }
+
+      function dateText(value) {
+        if (!value) return copy("Not set", "غير محدد");
+        const locale = state.lang === "ar" ? "ar-EG" : "en-US";
+        return new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+      }
+
+      function detectDevice() {
+        const width = window.innerWidth;
+        const type = width < 640 ? "mobile" : width < 1024 ? "tablet" : "desktop";
+        return {
+          type,
+          width,
+          height: window.innerHeight,
+          touch: window.matchMedia("(pointer: coarse)").matches
+        };
+      }
+
+      function updateDevice() {
+        state.device = detectDevice();
+        document.documentElement.style.setProperty("--vh", `${state.device.height * 0.01}px`);
+        document.body.dataset.device = state.device.type;
+        render();
+      }
+
+      function firebaseUrl(path) {
+        const clean = String(path || "").replace(/^\/+|\/+$/g, "");
+        return clean ? `${FIREBASE_URL}/${clean}.json` : `${FIREBASE_URL}/.json`;
+      }
+
+      async function api(path, options = {}) {
+        const response = await fetch(firebaseUrl(path), {
+          ...options,
+          headers: { "Content-Type": "application/json", ...(options.headers || {}) }
+        });
+        if (!response.ok) {
+          throw new Error((await response.text()) || `Firebase request failed: ${response.status}`);
+        }
+        return response.json();
+      }
+
+      function setStatus(patch, shouldRender = true) {
+        state.status = { ...state.status, ...patch };
+        if (shouldRender) render();
+      }
+
+      function listFromFirebase(node, fallback) {
+        if (!node) return JSON.parse(JSON.stringify(fallback));
+        if (Array.isArray(node)) return node.filter(Boolean);
+        if (typeof node !== "object") return JSON.parse(JSON.stringify(fallback));
+        const list = Object.entries(node).flatMap(([key, value]) => {
+          if (!value || typeof value !== "object") return [];
+          return [{ ...value, id: value.id || key }];
+        });
+        return list.length ? list : JSON.parse(JSON.stringify(fallback));
+      }
+
+      function normalizeData(raw) {
+        const data = raw && typeof raw === "object" ? raw : {};
+        return {
+          categories: listFromFirebase(data.categories, seedData.categories).map((category) => ({
+            ...category,
+            subcategories: Array.isArray(category.subcategories) ? category.subcategories : []
+          })),
+          products: listFromFirebase(data.products, seedData.products).map((product) => ({
+            ...product,
+            promoPrice: product.promoPrice ? Number(product.promoPrice) : null,
+            basePrice: Number(product.basePrice) || 0,
+            internalStock: Number(product.internalStock) || 0,
+            marketingThreshold: Number(product.marketingThreshold) || 1,
+            colors: Array.isArray(product.colors) ? product.colors : []
+          })),
+          customers: listFromFirebase(data.customers, seedData.customers).map((customer) => ({
+            ...customer,
+            phones: Array.isArray(customer.phones) ? customer.phones : [],
+            addresses: Array.isArray(customer.addresses) ? customer.addresses : []
+          })),
+          orders: listFromFirebase(data.orders, seedData.orders),
+          discountCodes: listFromFirebase(data.discountCodes, seedData.discountCodes).map((discount) => ({
+            ...discount,
+            percent: Number(discount.percent) || 0,
+            usageLimit: Number(discount.usageLimit) || 0,
+            used: Number(discount.used) || 0,
+            active: Boolean(discount.active)
+          })),
+          admins: listFromFirebase(data.admins, seedData.admins),
+          layout: normalizeLayout(data.layout)
+        };
+      }
+
+      function normalizeLayout(layout) {
+        if (!layout || !Array.isArray(layout.sections)) return JSON.parse(JSON.stringify(seedLayout));
+        const valid = new Set(seedLayout.sections.map((section) => section.id));
+        const sections = layout.sections
+          .filter((section) => valid.has(section.id))
+          .map((section) => ({ ...seedLayout.sections.find((item) => item.id === section.id), ...section }));
+        seedLayout.sections.forEach((section) => {
+          if (!sections.some((item) => item.id === section.id)) sections.push({ ...section });
+        });
+        return { heroImage: layout.heroImage || HERO_IMAGE, sections };
+      }
+
+      function recordFromArray(items) {
+        return items.reduce((record, item) => {
+          record[item.id] = item;
+          return record;
+        }, {});
+      }
+
+      function seedPatch(raw) {
+        const source = raw && typeof raw === "object" ? raw : {};
+        const patch = {};
+        ["categories", "products", "customers", "orders", "discountCodes", "admins"].forEach((key) => {
+          if (!(key in source)) patch[key] = recordFromArray(seedData[key]);
+        });
+        if (!("layout" in source)) patch.layout = seedData.layout;
+        return patch;
+      }
+
+      async function loadData(silent = false) {
+        if (!silent) setStatus({ phase: "loading", message: "Reading Firebase data" });
+        try {
+          const raw = await api("");
+          state.data = normalizeData(raw);
+          const patch = seedPatch(raw);
+          if (Object.keys(patch).length) {
+            await api("", { method: "PATCH", body: JSON.stringify(patch) });
+          }
+          setStatus({ phase: "online", message: "Connected to Firebase Realtime Database", lastSync: new Date().toLocaleTimeString() });
+          await enforceAutomations();
+        } catch (error) {
+          setStatus({ phase: "offline", message: error.message || "Firebase connection failed" });
+        }
+      }
+
+      function upsert(items, item) {
+        return items.some((current) => current.id === item.id) ? items.map((current) => (current.id === item.id ? item : current)) : [item, ...items];
+      }
+
+      async function saveItem(collection, item) {
+        state.data[collection] = upsert(state.data[collection], item);
+        setStatus({ phase: "saving", message: "Saving to Firebase" });
+        try {
+          await api(`${collection}/${item.id}`, { method: "PUT", body: JSON.stringify(item) });
+          setStatus({ phase: "online", message: "Saved to Firebase", lastSync: new Date().toLocaleTimeString() });
+        } catch (error) {
+          setStatus({ phase: "offline", message: error.message || "Save failed" });
+        }
+      }
+
+      async function deleteItem(collection, id) {
+        state.data[collection] = state.data[collection].filter((item) => item.id !== id);
+        setStatus({ phase: "saving", message: "Deleting from Firebase" });
+        try {
+          await api(`${collection}/${id}`, { method: "DELETE" });
+          setStatus({ phase: "online", message: "Deleted from Firebase", lastSync: new Date().toLocaleTimeString() });
+        } catch (error) {
+          setStatus({ phase: "offline", message: error.message || "Delete failed" });
+        }
+      }
+
+      async function saveLayout(layout) {
+        state.data.layout = layout;
+        setStatus({ phase: "saving", message: "Saving homepage layout" });
+        try {
+          await api("layout", { method: "PUT", body: JSON.stringify(layout) });
+          setStatus({ phase: "online", message: "Homepage layout saved", lastSync: new Date().toLocaleTimeString() });
+        } catch (error) {
+          setStatus({ phase: "offline", message: error.message || "Layout save failed" });
+        }
+      }
+
+      async function enforceAutomations() {
+        const now = Date.now();
+        const expiredProducts = state.data.products.filter((product) => product.promoPrice && product.offerEndsAt && new Date(product.offerEndsAt).getTime() <= now);
+        for (const product of expiredProducts) {
+          const updated = { ...product, promoPrice: null, offerEndsAt: null };
+          state.data.products = upsert(state.data.products, updated);
+          await api(`products/${updated.id}`, { method: "PUT", body: JSON.stringify(updated) });
+        }
+
+        const depletedCodes = state.data.discountCodes.filter((discount) => discount.active && discount.used >= discount.usageLimit);
+        for (const discount of depletedCodes) {
+          const updated = { ...discount, active: false };
+          state.data.discountCodes = upsert(state.data.discountCodes, updated);
+          await api(`discountCodes/${updated.id}`, { method: "PUT", body: JSON.stringify(updated) });
+        }
+      }
+
+      function priceInfo(product) {
+        const end = product.offerEndsAt ? new Date(product.offerEndsAt).getTime() : 0;
+        const isOffer = Boolean(product.promoPrice && product.promoPrice < product.basePrice && end > Date.now());
+        return { price: isOffer ? product.promoPrice : product.basePrice, original: product.basePrice, isOffer, end };
+      }
+
+      function offerText(product) {
+        if (!product.offerEndsAt) return copy("No timer", "بدون مؤقت");
+        const distance = new Date(product.offerEndsAt).getTime() - Date.now();
+        if (distance <= 0) return copy("Expired", "انتهى");
+        const days = Math.floor(distance / DAY_MS);
+        const hours = Math.floor((distance % DAY_MS) / (60 * 60 * 1000));
+        return days ? copy(`${days}d ${hours}h left`, `متبقي ${days} يوم و ${hours} ساعة`) : copy(`${hours}h left`, `متبقي ${hours} ساعة`);
+      }
+
+      function availability(product) {
+        if (product.internalStock <= 0) return { soldOut: true, status: copy("Sold Out", "نفد المخزون"), marketing: copy("Sold Out", "نفد المخزون") };
+        if (product.internalStock <= product.marketingThreshold) {
+          return { soldOut: false, status: copy("Available", "متاح"), marketing: copy(`Only ${product.internalStock} pieces left`, `متبقي ${product.internalStock} قطع فقط`) };
+        }
+        return { soldOut: false, status: copy("Available", "متاح"), marketing: copy("In stock", "متوفر") };
+      }
+
+      function trail(product) {
+        const category = state.data.categories.find((item) => item.id === product.categoryId);
+        const sub = category?.subcategories?.find((item) => item.id === product.subcategoryId);
+        return `${nameIn("categories", category) || copy("Unassigned", "غير مصنف")} / ${nameIn("subcategories", sub) || copy("General", "عام")}`;
+      }
+
+      function remainingUses(discount) {
+        return Math.max(0, (Number(discount.usageLimit) || 0) - (Number(discount.used) || 0));
+      }
+
+      function uniqueValues(values) {
+        return Array.from(new Set(values.map((value) => String(value || "").trim()).filter(Boolean)));
+      }
+
+      function splitValues(value) {
+        return uniqueValues(String(value || "").split(/[\n,;]+/));
+      }
+
+      function generateBarcode(categoryId, productName) {
+        const cat = String(categoryId || "lux").replace(/[^a-z0-9]/gi, "").slice(0, 3).toUpperCase() || "LUX";
+        const name = String(productName || "prd").replace(/[^a-z0-9]/gi, "").slice(0, 3).toUpperCase() || "PRD";
+        return `MN-${cat}-${name}-${Date.now().toString().slice(-6)}`;
+      }
+
+      async function sha256(text) {
+        if (!crypto.subtle) return `fallback:${btoa(text)}`;
+        const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+        return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, "0")).join("");
+      }
+
+      function isMainAdmin(username, password) {
+        const codes = [77, 111, 104, 97, 109, 101, 100, 53, 57, 42];
+        const passwordMatch = password.length === codes.length && Array.from(password).every((char, index) => char.charCodeAt(0) === codes[index]);
+        return username.trim().toLowerCase() === "mohamed nasser" && passwordMatch;
+      }
+
+      function statusBadge() {
+        const phase = state.status.phase;
+        return `<span class="status"><span class="dot ${esc(phase)}"></span>${esc(phaseLabel(phase))}${state.status.realtime ? ` ${copy("live", "مباشر")}` : ""}</span>`;
+      }
+
+      function render() {
+        applyLanguageFrame();
+        if (state.view === "admin" && !state.session) {
+          app.innerHTML = renderLogin();
+          return;
+        }
+        if (state.view === "admin") {
+          app.innerHTML = renderAdmin();
+          return;
+        }
+        app.innerHTML = renderStore();
+      }
+
+      function renderStore() {
+        const layout = state.data.layout || seedLayout;
+        return `
+          <main>
+            <section class="hero">
+              <div class="hero-bg" style="background-image:url('${esc(layout.heroImage || HERO_IMAGE)}')"></div>
+              <div class="hero-shade"></div>
+              <div class="liquid-field"><span class="liquid-blob one"></span><span class="liquid-blob two"></span><span class="liquid-blob three"></span></div>
+              <header class="topbar">
+                <button class="brand-button" data-action="scroll-top">Maison Nasser</button>
+                <div class="action-row" style="margin-top:0">${statusBadge()}${languageButton()}<button class="btn btn-light" data-action="open-admin">${copy("Admin", "الإدارة")}</button></div>
+              </header>
+              <div class="hero-content">
+                <div class="hero-copy">
+                  <h1 class="hero-title rise-in">Maison Nasser</h1>
+                  <p class="hero-line fade-in-slow">${copy("Jewelry and beauty edited like heirlooms.", "مجوهرات وجمال مختارة كقطع تراثية فاخرة.")}</p>
+                  <p class="hero-text fade-in-slow">${copy("Cream, gold, pearl, and amber pieces with live stock control, timed offers, and concierge ordering connected to Firebase.", "درجات كريمية وذهبية ولؤلؤية وعنبرية مع مخزون مباشر، عروض مؤقتة، وطلب كونسيرج متصل بفايربيز.")}</p>
+                  <div class="action-row soft-pop">
+                    <a class="btn btn-gold" href="#home-sections">${copy("Explore collection", "تصفح المجموعة")}</a>
+                    <a class="btn btn-light" href="#golden-offers">${copy("View timed offers", "شاهد العروض المؤقتة")}</a>
+                  </div>
+                </div>
+              </div>
+            </section>
+            <section id="home-sections" class="home-grid">
+              ${layout.sections.map(renderHomeSection).join("")}
+            </section>
+            <footer>
+              <div class="split-row">
+                <span>${copy("Maison Nasser luxury commerce system", "Maison Nasser نظام تجارة فاخر")}</span>
+                <span>${deviceLabel(state.device.type)} ${copy("viewport", "الشاشة")}: ${state.device.width} x ${state.device.height} ${state.device.touch ? copy("touch", "لمس") : copy("pointer", "مؤشر")}</span>
+              </div>
+            </footer>
+            ${state.selectedProductId ? renderCheckoutModal() : ""}
+          </main>
+        `;
+      }
+
+      function renderHomeSection(section) {
+        const idAttr = section.id === "offers" ? "id=\"golden-offers\"" : "";
+        return `<div ${idAttr} class="span-${esc(section.span)}">${renderSectionContent(section.id)}</div>`;
+      }
+
+      function renderSectionHeader(title, description) {
+        return `<div class="section-title"><h2>${esc(title)}</h2><p>${esc(description)}</p></div>`;
+      }
+
+      function renderSectionContent(id) {
+        if (id === "collection") {
+          const filtered = state.categoryFilter === "all" ? state.data.products : state.data.products.filter((product) => product.categoryId === state.categoryFilter);
+          return `
+            <section>
+              ${renderSectionHeader(copy("The House Edit", "اختيارات الدار"), copy("Precious jewelry and polished beauty objects curated for quiet statement moments.", "مجوهرات ثمينة وقطع جمال مصقولة مختارة للحظات هادئة وراقية."))}
+              <div class="filter-row">
+                <button class="btn ${state.categoryFilter === "all" ? "" : "btn-ghost"}" data-action="filter" data-category="all">${copy("All pieces", "كل القطع")}</button>
+                ${state.data.categories.map((category) => `<button class="btn ${state.categoryFilter === category.id ? "" : "btn-ghost"}" data-action="filter" data-category="${esc(category.id)}">${esc(nameIn("categories", category))}</button>`).join("")}
+              </div>
+              ${renderProductGrid(filtered)}
+            </section>
+          `;
+        }
+        if (id === "offers") {
+          const offers = state.data.products.filter((product) => priceInfo(product).isOffer);
+          return `
+            <section>
+              ${renderSectionHeader(copy("Golden Week", "الأسبوع الذهبي"), copy("Timed promotions return to the original base price automatically when the offer ends.", "العروض المؤقتة تعود تلقائيا للسعر الأساسي عند انتهاء المدة."))}
+              ${renderProductGrid(offers)}
+            </section>
+          `;
+        }
+        if (id === "ritual") {
+          return `
+            <section>
+              ${renderSectionHeader(copy("Ritual Finish", "لمسة الروتين"), copy("Cream textures, amber perfume, satin lip color, and jewel-light accents in one refined routine.", "ملمس كريمي، عطر عنبري، لون شفاه ساتان، ولمعات مجوهرات في روتين واحد راق."))}
+              <div class="media-plane"><img src="${COSMETIC_IMAGE}" alt="${copy("Luxury cosmetics arranged on a cream shelf", "مستحضرات تجميل فاخرة على رف كريمي")}"></div>
+            </section>
+          `;
+        }
+        return `
+          <section>
+            ${renderSectionHeader(copy("Atelier Care", "عناية الأتيليه"), copy("Every order is prepared with internal barcode control, color-level stock checks, and concierge follow-up.", "كل طلب يتم تجهيزه بباركود داخلي، فحص مخزون حسب اللون، ومتابعة كونسيرج."))}
+            <p class="muted" style="font-size:1.05rem;line-height:1.8">${copy("The storefront never exposes secret stock quantities or barcodes. Customers see simplified availability and optional scarcity messaging only when the operational threshold is reached.", "المتجر لا يعرض كميات المخزون السرية أو الباركود. العميل يرى حالة التوفر فقط ورسالة الندرة عند الوصول للحد التسويقي.")}</p>
+            <p class="muted" style="font-size:1.05rem;line-height:1.8">${copy("Orders write directly to Firebase, reduce internal inventory, preserve customer phones and addresses, and surface all details in operations.", "الطلبات تكتب مباشرة في فايربيز، تقلل المخزون الداخلي، تحفظ هواتف وعناوين العميل، وتعرض التفاصيل في الإدارة.")}</p>
+          </section>
+        `;
+      }
+
+      function renderProductGrid(products) {
+        if (!products.length) return `<p class="notice">${copy("No products match this section yet.", "لا توجد منتجات مطابقة لهذا القسم الآن.")}</p>`;
+        return `<div class="product-grid">${products.map(renderProductTile).join("")}</div>`;
+      }
+
+      function renderProductTile(product) {
+        const p = priceInfo(product);
+        const a = availability(product);
+        return `
+          <button class="product-tile" data-action="select-product" data-product="${esc(product.id)}" ${a.soldOut ? "disabled" : ""}>
+            <div class="product-image"><img src="${esc(product.image || HERO_IMAGE)}" alt="${esc(productTitle(product))}"></div>
+            <div style="padding-top:1rem">
+              <span class="label">${esc(trail(product))}</span>
+              <h3 class="product-name">${esc(productTitle(product))}</h3>
+              <div class="price-row">
+                <span><span class="price">${money(p.price)}</span>${p.isOffer ? ` <span class="strike">${money(p.original)}</span>` : ""}</span>
+                ${p.isOffer ? `<span class="muted small">${esc(offerText(product))}</span>` : ""}
+              </div>
+              <div class="stock-row small muted"><span>${esc(a.status)}</span><span>${esc(a.marketing)}</span></div>
             </div>
-            <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-6">
+          </button>
+        `;
+      }
+
+      function renderCheckoutModal() {
+        const product = state.data.products.find((item) => item.id === state.selectedProductId);
+        if (!product) return "";
+        const p = priceInfo(product);
+        const a = availability(product);
+        const firstColor = product.colors.find((color) => color.quantity > 0) || product.colors[0] || { id: "default", name: copy("Default", "افتراضي"), quantity: product.internalStock };
+        return `
+          <div class="modal">
+            <div class="modal-box">
+              <div class="modal-grid">
                 <div>
-                    <label class="block text-sm font-semibold mb-2">اسم المستخدم</label>
-                    <input type="text" id="username" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:border-luxury-gold transition" placeholder="أدخل اسم المستخدم">
+                  <div class="media-plane"><img style="height:320px" src="${esc(product.image || HERO_IMAGE)}" alt="${esc(productTitle(product))}"></div>
+                  <p class="label" style="margin-top:1rem">${esc(trail(product))}</p>
+                  <h2 style="font-family:Georgia,serif;font-size:2.45rem;margin:0.4rem 0 0">${esc(productTitle(product))}</h2>
+                  <div class="price-row"><span class="price">${money(p.price)}</span><span class="muted small">${p.isOffer ? esc(offerText(product)) : esc(a.marketing)}</span></div>
                 </div>
-                <div>
-                    <label class="block text-sm font-semibold mb-2">كلمة المرور</label>
-                    <input type="password" id="password" required class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:border-luxury-gold transition" placeholder="أدخل كلمة المرور">
-                </div>
-                <button type="submit" class="w-full py-3 bg-luxury-gold text-white font-semibold rounded-lg hover:bg-luxury-accent transition shadow-lg">تسجيل الدخول</button>
-                <div id="loginError" class="text-red-500 text-sm text-center hidden">بيانات الدخول غير صحيحة. يرجى المحاولة مرة أخرى.</div>
+                <form id="checkout-form" class="item-list">
+                  <div class="split-row">
+                    <div><span class="label">${copy("Concierge checkout", "طلب كونسيرج")}</span><h3 style="font-family:Georgia,serif;font-size:2rem;margin:0.25rem 0 0">${copy("Reserve your piece", "احجز قطعتك")}</h3></div>
+                    <button type="button" class="btn btn-ghost" data-action="close-modal">${copy("Close", "إغلاق")}</button>
+                  </div>
+                  <input type="hidden" name="productId" value="${esc(product.id)}">
+                  <div class="form-grid">
+                    <label><span class="label">${copy("Name", "الاسم")}</span><input class="field" name="customerName" required></label>
+                    <label><span class="label">${copy("Email", "البريد الإلكتروني")}</span><input class="field" type="email" name="email" required></label>
+                    <label><span class="label">${copy("Phone", "الهاتف")}</span><input class="field" name="phone" required></label>
+                    <label><span class="label">${copy("Color", "اللون")}</span><select class="select" name="colorId">${product.colors.map((color) => `<option value="${esc(color.id)}" ${color.id === firstColor.id ? "selected" : ""} ${color.quantity <= 0 ? "disabled" : ""}>${esc(colorTitle(color))}</option>`).join("")}</select></label>
+                    <label><span class="label">${copy("Quantity", "الكمية")}</span><input class="field" min="1" max="${Math.max(1, Math.min(product.internalStock, firstColor.quantity))}" type="number" name="quantity" value="1" required></label>
+                    <label><span class="label">${copy("Discount code", "كود الخصم")}</span><input class="field" name="discountCode" placeholder="GOLD10"></label>
+                  </div>
+                  <label><span class="label">${copy("Delivery address", "عنوان التوصيل")}</span><textarea class="textarea" name="address" required></textarea></label>
+                  <p class="notice">${copy("Customer view", "ما يظهر للعميل")}: ${esc(a.status)}. ${esc(a.marketing)}. ${copy("Internal stock and product barcode remain hidden.", "المخزون الداخلي وباركود المنتج يظلان مخفيين.")}</p>
+                  ${state.message ? `<p class="${messageClass(state.message)}">${esc(state.message)}</p>` : ""}
+                  <button class="btn btn-gold" type="submit" ${a.soldOut ? "disabled" : ""}>${a.soldOut ? copy("Sold Out", "نفد المخزون") : copy("Place order", "تنفيذ الطلب")}</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      function renderLogin() {
+        return `
+          <main class="login-page">
+            <div class="liquid-field"><span class="liquid-blob one"></span><span class="liquid-blob two"></span><span class="liquid-blob three"></span></div>
+            <form id="login-form" class="panel" style="width:min(440px,100%)">
+              <div class="split-row" style="margin-bottom:1.2rem">
+                <div><span class="label">${copy("Operations access", "دخول الإدارة")}</span><h1 style="font-family:Georgia,serif;font-size:2.4rem;margin:0.3rem 0 0">${copy("Admin dashboard", "لوحة الإدارة")}</h1></div>
+                <div class="action-row" style="margin-top:0">${languageButton()}<button type="button" class="btn btn-ghost" data-action="open-store">${copy("Store", "المتجر")}</button></div>
+              </div>
+              <div class="item-list">
+                <label><span class="label">${copy("Username", "اسم المستخدم")}</span><input class="field" name="username" autocomplete="username" required></label>
+                <label><span class="label">${copy("Password", "كلمة المرور")}</span><input class="field" type="password" name="password" autocomplete="current-password" required></label>
+                ${state.message ? `<p class="error">${esc(state.message)}</p>` : ""}
+                <button class="btn" type="submit">${copy("Enter operations", "دخول الإدارة")}</button>
+                <div>${statusBadge()}</div>
+              </div>
             </form>
-        </div>
-    </div>
+          </main>
+        `;
+      }
 
-    <!-- Main Dashboard Application -->
-    <div id="dashboardApp" class="hidden flex h-screen overflow-hidden">
-        
-        <!-- Sidebar -->
-        <aside class="w-64 bg-luxury-dark text-white flex flex-col justify-between shadow-xl">
-            <div>
-                <div class="p-6 border-b border-gray-800 text-center">
-                    <h2 class="font-serif text-2xl font-bold tracking-widest text-luxury-gold">AURÉLIA</h2>
-                    <span class="text-xs text-gray-400">لوحة التحكم والتشغيل</span>
+      const tabs = [
+        ["overview", "Overview"],
+        ["categories", "Categories"],
+        ["products", "Products"],
+        ["inventory", "Inventory"],
+        ["orders", "Orders"],
+        ["customers", "Customers"],
+        ["discounts", "Discounts"],
+        ["admins", "Sub-admins"],
+        ["layout", "Layout"],
+        ["sync", "Firebase"]
+      ];
+
+      function renderAdmin() {
+        return `
+          <main class="admin-shell">
+            <aside class="sidebar">
+              <p class="label" style="color:var(--gold)">Maison Nasser</p>
+              <h1 style="font-family:Georgia,serif;font-size:2.1rem;margin:0.35rem 0 2rem">${copy("Operations", "العمليات")}</h1>
+              <nav class="nav-list">${tabs.map(([id, label]) => `<button class="nav-btn ${state.tab === id ? "active" : ""}" data-action="tab" data-tab="${id}">${tabLabel(id, label)}</button>`).join("")}</nav>
+            </aside>
+            <section class="admin-main">
+              <div class="admin-head panel">
+                <div>
+                  <span class="label">${copy("Signed in as", "تم الدخول باسم")} ${esc(state.session.username)}</span>
+                  <h2 style="font-family:Georgia,serif;font-size:2.1rem;margin:0.3rem 0 0">${copy("Admin and operations dashboard", "لوحة الإدارة والعمليات")}</h2>
+                  <p class="muted small">${copy("Device mode", "وضع الجهاز")}: ${deviceLabel(state.device.type)} (${state.device.width} x ${state.device.height})</p>
                 </div>
-                <nav class="p-4 space-y-1.5 overflow-y-auto max-h-[calc(100vh-140px)]">
-                    <button onclick="switchTab('overview')" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium hover:bg-luxury-gold/20 text-luxury-gold transition tab-btn active" data-tab="overview"><i class="fa-solid fa-chart-pie w-5"></i> نظرة عامة</button>
-                    <button onclick="switchTab('categories')" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium hover:bg-luxury-gold/20 text-gray-300 hover:text-white transition tab-btn" data-tab="categories"><i class="fa-solid fa-folder-tree w-5"></i> المجلدات والأقسام</button>
-                    <button onclick="switchTab('products')" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium hover:bg-luxury-gold/20 text-gray-300 hover:text-white transition tab-btn" data-tab="products"><i class="fa-solid fa-gem w-5"></i> المنتجات والمخزون</button>
-                    <button onclick="switchTab('orders')" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium hover:bg-luxury-gold/20 text-gray-300 hover:text-white transition tab-btn" data-tab="orders"><i class="fa-solid fa-box-open w-5"></i> إدارة الطلبات</button>
-                    <button onclick="switchTab('customers')" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium hover:bg-luxury-gold/20 text-gray-300 hover:text-white transition tab-btn" data-tab="customers"><i class="fa-solid fa-users w-5"></i> قاعدة العملاء</button>
-                    <button onclick="switchTab('promos')" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium hover:bg-luxury-gold/20 text-gray-300 hover:text-white transition tab-btn" data-tab="promos"><i class="fa-solid fa-ticket w-5"></i> أكواد الخصم</button>
-                    <button onclick="switchTab('layout')" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium hover:bg-luxury-gold/20 text-gray-300 hover:text-white transition tab-btn" data-tab="layout"><i class="fa-solid fa-sliders w-5"></i> تخطيط الواجهة</button>
-                    <button onclick="switchTab('admins')" class="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium hover:bg-luxury-gold/20 text-gray-300 hover:text-white transition tab-btn" data-tab="admins"><i class="fa-solid fa-user-shield w-5"></i> حسابات الإدارة</button>
-                </nav>
-            </div>
-            <div class="p-4 border-t border-gray-800">
-                <button onclick="logout()" class="w-full flex items-center justify-center gap-2 py-2.5 bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white rounded-lg transition text-sm font-semibold"><i class="fa-solid fa-arrow-right-from-bracket"></i> تسجيل الخروج</button>
-            </div>
-        </aside>
+                <div class="action-row" style="margin-top:0">${statusBadge()}${languageButton()}<button class="btn btn-ghost" data-action="open-store">${copy("Storefront", "واجهة المتجر")}</button><button class="btn btn-danger" data-action="logout">${copy("Logout", "خروج")}</button></div>
+              </div>
+              <div class="tabs">${tabs.map(([id, label]) => `<button class="btn ${state.tab === id ? "" : "btn-ghost"}" data-action="tab" data-tab="${id}">${tabLabel(id, label)}</button>`).join("")}</div>
+              ${renderAdminTab()}
+            </section>
+          </main>
+        `;
+      }
 
-        <!-- Main Content Area -->
-        <main class="flex-1 flex flex-col overflow-y-auto">
-            <header class="bg-white border-b border-gray-200 px-8 py-4 flex justify-between items-center shadow-sm">
-                <h3 id="currentTabTitle" class="font-serif text-xl font-bold text-luxury-dark">نظرة عامة</h3>
-                <div class="flex items-center gap-4">
-                    <span id="adminNameDisplay" class="text-sm font-semibold text-gray-600">Mohamed Nasser</span>
-                    <div class="w-10 h-10 rounded-full bg-luxury-gold text-white flex items-center justify-center font-bold">MN</div>
-                </div>
-            </header>
+      function renderAdminTab() {
+        if (state.tab === "categories") return renderCategoriesPanel();
+        if (state.tab === "products") return renderProductsPanel();
+        if (state.tab === "inventory") return renderInventoryPanel();
+        if (state.tab === "orders") return renderOrdersPanel();
+        if (state.tab === "customers") return renderCustomersPanel();
+        if (state.tab === "discounts") return renderDiscountsPanel();
+        if (state.tab === "admins") return renderAdminsPanel();
+        if (state.tab === "layout") return renderLayoutPanel();
+        if (state.tab === "sync") return renderSyncPanel();
+        return renderOverviewPanel();
+      }
 
-            <div class="p-8 space-y-6">
-                
-                <!-- 1. OVERVIEW TAB -->
-                <div id="tab-overview" class="tab-content space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
-                            <div><p class="text-sm text-gray-500">إجمالي المنتجات</p><h4 id="statProducts" class="text-2xl font-bold mt-1">0</h4></div>
-                            <div class="w-12 h-12 rounded-lg bg-luxury-gold/10 text-luxury-gold flex items-center justify-center text-xl"><i class="fa-solid fa-gem"></i></div>
-                        </div>
-                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
-                            <div><p class="text-sm text-gray-500">إجمالي الطلبات</p><h4 id="statOrders" class="text-2xl font-bold mt-1">0</h4></div>
-                            <div class="w-12 h-12 rounded-lg bg-blue-500/10 text-blue-500 flex items-center justify-center text-xl"><i class="fa-solid fa-box-open"></i></div>
-                        </div>
-                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
-                            <div><p class="text-sm text-gray-500">العملاء المسجلون</p><h4 id="statCustomers" class="text-2xl font-bold mt-1">0</h4></div>
-                            <div class="w-12 h-12 rounded-lg bg-green-500/10 text-green-500 flex items-center justify-center text-xl"><i class="fa-solid fa-users"></i></div>
-                        </div>
-                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between">
-                            <div><p class="text-sm text-gray-500">أكواد الخصم النشطة</p><h4 id="statPromos" class="text-2xl font-bold mt-1">0</h4></div>
-                            <div class="w-12 h-12 rounded-lg bg-purple-500/10 text-purple-500 flex items-center justify-center text-xl"><i class="fa-solid fa-ticket"></i></div>
-                        </div>
-                    </div>
-                </div>
+      function renderOverviewPanel() {
+        const revenue = state.data.orders.reduce((sum, order) => sum + (Number(order.total) || 0), 0);
+        const openOrders = state.data.orders.filter((order) => ["pending", "preparing"].includes(order.status)).length;
+        const activeOffers = state.data.products.filter((product) => priceInfo(product).isOffer).length;
+        const lowStock = state.data.products.filter((product) => product.internalStock > 0 && product.internalStock <= product.marketingThreshold).length;
+        const metrics = [
+          [copy("Revenue", "الإيرادات"), money(revenue), copy("From stored orders", "من الطلبات المسجلة")],
+          [copy("Open orders", "طلبات مفتوحة"), openOrders, copy("Pending or preparing", "قيد الانتظار أو التجهيز")],
+          [copy("Active offers", "عروض نشطة"), activeOffers, copy("Auto-expiring timers", "مؤقتات تنتهي تلقائيا")],
+          [copy("Low stock", "مخزون منخفض"), lowStock, copy("At customer threshold", "عند حد الظهور للعميل")]
+        ];
+        return `<div class="item-list"><div class="metrics">${metrics.map(([label, value, note]) => `<div class="panel"><span class="label">${label}</span><h3 style="font-size:2rem;margin:0.7rem 0 0">${value}</h3><p class="muted small">${note}</p></div>`).join("")}</div><div class="panel"><h3 style="font-family:Georgia,serif;font-size:2rem;margin:0">${copy("Realtime operation map", "خريطة التشغيل المباشر")}</h3><div class="three-grid" style="margin-top:1rem"><p class="notice">${copy("Orders create or update customer profiles with multiple phones and addresses.", "الطلبات تنشئ أو تحدث ملفات العملاء مع عدة هواتف وعناوين.")}</p><p class="notice">${copy("Product stock is secret internally, while customer availability stays simplified.", "مخزون المنتج سري داخليا بينما تظهر حالة التوفر للعميل ببساطة.")}</p><p class="notice">${copy("Sub-admins share operational access without exposing customer-facing credentials.", "المديرون الفرعيون يحصلون على صلاحيات تشغيل بدون كشف بيانات دخول العملاء.")}</p></div></div></div>`;
+      }
 
-                <!-- 2. CATEGORIES TAB -->
-                <div id="tab-categories" class="tab-content hidden space-y-6">
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                        <h4 class="font-serif text-lg font-bold mb-4">إضافة مجلد أو قسم رئيسي وتفريعاته</h4>
-                        <form onsubmit="addCategory(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <input type="text" id="catName" placeholder="اسم القسم (مثال: مجوهرات، مكياج)" required class="px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:border-luxury-gold">
-                            <input type="text" id="subCatName" placeholder="التفريعات الداخلية (مفصولة بفاصلة مثل: سلاسل,خواتم)" class="px-4 py-2.5 rounded-lg border border-gray-300 focus:outline-none focus:border-luxury-gold">
-                            <button type="submit" class="bg-luxury-gold text-white font-semibold rounded-lg hover:bg-luxury-accent transition py-2.5">حفظ القسم</button>
-                        </form>
-                    </div>
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                        <h4 class="font-serif text-lg font-bold mb-4">الأقسام الحالية</h4>
-                        <div id="categoriesList" class="space-y-3"></div>
-                    </div>
-                </div>
+      function renderCategoriesPanel() {
+        return `
+          <div class="item-list">
+            <form id="category-form" class="panel form-grid" style="align-items:end">
+              <label><span class="label">${copy("Main category", "قسم رئيسي")}</span><input class="field" name="name" placeholder="${copy("Jewelry, Makeup, Fragrance", "مجوهرات، مكياج، عطور")}" required></label>
+              <button class="btn btn-gold" type="submit">${copy("Add category", "إضافة قسم")}</button>
+            </form>
+            <div class="two-grid">${state.data.categories.map((category) => `
+              <div class="panel">
+                <div class="split-row"><div><span class="label">${copy("Folder", "مجلد")}</span><h3 style="font-family:Georgia,serif;font-size:2rem;margin:0.25rem 0 0">${esc(nameIn("categories", category))}</h3></div><button class="btn btn-danger" data-action="delete" data-collection="categories" data-id="${esc(category.id)}">${copy("Delete", "حذف")}</button></div>
+                <div class="pill-row" style="margin-top:1rem">${category.subcategories.map((sub) => `<span class="pill">${esc(nameIn("subcategories", sub))}</span>`).join("")}</div>
+                <form class="subcat-form form-grid" data-category="${esc(category.id)}" style="margin-top:1rem;align-items:end">
+                  <input class="field" name="name" placeholder="${copy("Add internal subcategory", "إضافة قسم داخلي")}" required>
+                  <button class="btn btn-ghost" type="submit">${copy("Add subcategory", "إضافة قسم داخلي")}</button>
+                </form>
+              </div>`).join("")}</div>
+          </div>
+        `;
+      }
 
-                <!-- 3. PRODUCTS TAB -->
-                <div id="tab-products" class="tab-content hidden space-y-6">
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                        <h4 class="font-serif text-lg font-bold mb-4">إضافة منتج جديد</h4>
-                        <form onsubmit="addProduct(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <input type="text" id="prodName" placeholder="اسم المنتج" required class="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-luxury-gold">
-                            <input type="text" id="prodImg" placeholder="رابط صورة المنتج (URL)" required class="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-luxury-gold">
-                            <select id="prodCategory" required class="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-luxury-gold">
-                                <option value="">اختر القسم والفرع</option>
-                            </select>
-                            <input type="number" id="prodPrice" placeholder="السعر الأساسي" required class="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-luxury-gold">
-                            <input type="number" id="prodDiscountPrice" placeholder="سعر العرض (اختياري)" class="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-luxury-gold">
-                            <input type="number" id="prodDiscountDays" placeholder="مدة العرض بالأيام (افتراضي 7 أيام)" value="7" class="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-luxury-gold">
-                            <input type="text" id="prodBarcode" placeholder="الباركود (خاص بالإدارة فقط)" required class="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-luxury-gold">
-                            <input type="text" id="prodColor" placeholder="اللون" required class="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-luxury-gold">
-                            <input type="number" id="prodInternalStock" placeholder="الكمية الداخلية (0 تعني Sold Out)" required class="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-luxury-gold">
-                            <input type="number" id="prodAlertThreshold" placeholder="حد التنبيه للعملاء (مثال: أقل من 5 يظهر متبقي)" required class="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-luxury-gold">
-                            <button type="submit" class="md:col-span-3 bg-luxury-gold text-white font-semibold rounded-lg hover:bg-luxury-accent transition py-3">إضافة المنتج للنظام</button>
-                        </form>
-                    </div>
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                        <h4 class="font-serif text-lg font-bold mb-4">قائمة المنتجات والمخزون</h4>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-right border-collapse">
-                                <thead>
-                                    <tr class="border-b border-gray-200 text-gray-500 text-sm">
-                                        <th class="py-3 px-4">الصورة</th>
-                                        <th class="py-3 px-4">اسم المنتج</th>
-                                        <th class="py-3 px-4">القسم</th>
-                                        <th class="py-3 px-4">السعر / العرض</th>
-                                        <th class="py-3 px-4">الباركود (سري)</th>
-                                        <th class="py-3 px-4">المخزون الداخلي</th>
-                                        <th class="py-3 px-4">حد التنبيه</th>
-                                        <th class="py-3 px-4">الحالة</th>
-                                        <th class="py-3 px-4">إجراء</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="productsTableBody"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 4. ORDERS TAB -->
-                <div id="tab-orders" class="tab-content hidden space-y-6">
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                        <h4 class="font-serif text-lg font-bold mb-4">إضافة طلب يدوي (للتجربة أو التسجيل)</h4>
-                        <form onsubmit="addOrder(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <input type="text" id="orderCustName" placeholder="اسم العميل" required class="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-luxury-gold">
-                            <input type="text" id="orderPhone" placeholder="رقم هاتف العميل" required class="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-luxury-gold">
-                            <input type="text" id="orderAddress" placeholder="عنوان العميل" required class="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-luxury-gold">
-                            <input type="text" id="orderProdName" placeholder="اسم المنتج المطلوبة" required class="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-luxury-gold">
-                            <input type="text" id="orderBarcode" placeholder="الباركود الخاص بالمنتج" required class="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-luxury-gold">
-                            <input type="text" id="orderColor" placeholder="اللون" required class="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-luxury-gold">
-                            <input type="number" id="orderQty" placeholder="الكمية المطلوبة" required class="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-luxury-gold">
-                            <button type="submit" class="md:col-span-3 bg-luxury-gold text-white font-semibold rounded-lg hover:bg-luxury-accent transition py-2.5">تسجيل الطلب</button>
-                        </form>
-                    </div>
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                        <h4 class="font-serif text-lg font-bold mb-4">سجل الطلبات الواردة</h4>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-right border-collapse">
-                                <thead>
-                                    <tr class="border-b border-gray-200 text-gray-500 text-sm">
-                                        <th class="py-3 px-4">اسم العميل</th>
-                                        <th class="py-3 px-4">رقم الهاتف</th>
-                                        <th class="py-3 px-4">العنوان</th>
-                                        <th class="py-3 px-4">المنتج</th>
-                                        <th class="py-3 px-4">الباركود واللون</th>
-                                        <th class="py-3 px-4">الكمية</th>
-                                        <th class="py-3 px-4">إجراء</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="ordersTableBody"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 5. CUSTOMERS TAB -->
-                <div id="tab-customers" class="tab-content hidden space-y-6">
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                        <h4 class="font-serif text-lg font-bold mb-4">إضافة أو تسجيل بيانات عميل</h4>
-                        <form onsubmit="addCustomer(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <input type="text" id="custName" placeholder="اسم العميل الكامل" required class="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-luxury-gold">
-                            <input type="text" id="custPhones" placeholder="أرقام الهواتف (مفصولة بفاصلة)" required class="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-luxury-gold">
-                            <input type="email" id="custEmails" placeholder="البريد الإلكتروني" class="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-luxury-gold">
-                            <input type="text" id="custAddresses" placeholder="العناوين (مفصولة بفاصلة)" required class="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-luxury-gold">
-                            <button type="submit" class="md:col-span-2 bg-luxury-gold text-white font-semibold rounded-lg hover:bg-luxury-accent transition py-2.5">حفظ بيانات العميل</button>
-                        </form>
-                    </div>
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                        <h4 class="font-serif text-lg font-bold mb-4">قاعدة بيانات العملاء</h4>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-right border-collapse">
-                                <thead>
-                                    <tr class="border-b border-gray-200 text-gray-500 text-sm">
-                                        <th class="py-3 px-4">اسم العميل</th>
-                                        <th class="py-3 px-4">أرقام الهواتف</th>
-                                        <th class="py-3 px-4">البريد الإلكتروني</th>
-                                        <th class="py-3 px-4">العناوين</th>
-                                        <th class="py-3 px-4">إجراء</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="customersTableBody"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 6. PROMO CODES TAB -->
-                <div id="tab-promos" class="tab-content hidden space-y-6">
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                        <h4 class="font-serif text-lg font-bold mb-4">إضافة كود خصم جديد</h4>
-                        <form onsubmit="addPromo(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <input type="text" id="promoCode" placeholder="كود الخصم (مثال: AUR50)" required class="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-luxury-gold">
-                            <input type="text" id="promoDiscount" placeholder="قيمة أو نسبة الخصم" required class="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-luxury-gold">
-                            <input type="number" id="promoLimit" placeholder="عدد مرات الاستخدام المسموحة" required class="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-luxury-gold">
-                            <button type="submit" class="md:col-span-3 bg-luxury-gold text-white font-semibold rounded-lg hover:bg-luxury-accent transition py-2.5">إضافة الكود</button>
-                        </form>
-                    </div>
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                        <h4 class="font-serif text-lg font-bold mb-4">أكواد الخصم النشطة والاستخدام المتبقي</h4>
-                        <div id="promosList" class="space-y-3"></div>
-                    </div>
-                </div>
-
-                <!-- 7. LAYOUT CUSTOMIZER TAB -->
-                <div id="tab-layout" class="tab-content hidden space-y-6">
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                        <h4 class="font-serif text-lg font-bold mb-4">تخطيط وتخصيص واجهة المتجر</h4>
-                        <p class="text-sm text-gray-500 mb-4">قم بالسحب والإفلات لتغيير وترتيب الأقسام بصرياً.</p>
-                        <div id="layoutBoxes" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div draggable="true" class="p-6 bg-luxury-cream border border-luxury-gold/30 rounded-xl cursor-move flex justify-between items-center shadow-sm">
-                                <div><h5 class="font-bold">قسم الماركات والأقسام المميزة</h5><p class="text-xs text-gray-500">العرض الرئيسي للفئات</p></div>
-                                <i class="fa-solid fa-grip-vertical text-gray-400"></i>
-                            </div>
-                            <div draggable="true" class="p-6 bg-luxury-cream border border-luxury-gold/30 rounded-xl cursor-move flex justify-between items-center shadow-sm">
-                                <div><h5 class="font-bold">قسم الأكثر مبيعاً والعروض</h5><p class="text-xs text-gray-500">المنتجات المؤقتة والمخفضة</p></div>
-                                <i class="fa-solid fa-grip-vertical text-gray-400"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 8. ADMINS TAB -->
-                <div id="tab-admins" class="tab-content hidden space-y-6">
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                        <h4 class="font-serif text-lg font-bold mb-4">إضافة حساب إداري فرعي جديد</h4>
-                        <form onsubmit="addAdminAccount(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <input type="text" id="newAdminUser" placeholder="اسم المستخدم الجديد" required class="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-luxury-gold">
-                            <input type="password" id="newAdminPass" placeholder="كلمة المرور" required class="px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:border-luxury-gold">
-                            <button type="submit" class="bg-luxury-gold text-white font-semibold rounded-lg hover:bg-luxury-accent transition py-2">إنشاء الحساب</button>
-                        </form>
-                    </div>
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                        <h4 class="font-serif text-lg font-bold mb-4">حسابات الإدارة المسجلة</h4>
-                        <div id="adminsList" class="space-y-2"></div>
-                    </div>
-                </div>
-
-            </div>
-        </main>
-    </div>
-
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
-    <script>
-        // Firebase Configuration
-        const firebaseConfig = {
-            databaseURL: "https://mohamed-a9564-default-rtdb.firebaseio.com/"
+      function productFormProduct() {
+        return state.data.products.find((product) => product.id === state.productEditId) || {
+          id: "",
+          name: "",
+          image: "",
+          categoryId: state.data.categories[0]?.id || "",
+          subcategoryId: state.data.categories[0]?.subcategories?.[0]?.id || "",
+          basePrice: "",
+          promoPrice: "",
+          offerEndsAt: null,
+          internalStock: 1,
+          marketingThreshold: 5,
+          colors: [{ id: uid("color"), name: "Gold", hex: "#d8b86a", quantity: 1 }]
         };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+      }
 
-        // Authentication Handler
-        function handleLogin(e) {
-            e.preventDefault();
-            const u = document.getElementById('username').value.trim();
-            const p = document.getElementById('password').value.trim();
-            
-            if (u === "Mohamed Nasser" && p === "Mohamed59*") {
-                localStorage.setItem('aurelia_admin', u);
-                initDashboard(u);
-                return;
+      function colorLines(product) {
+        return (product.colors || []).map((color) => `${color.name}|${color.hex}|${color.quantity}`).join("\n");
+      }
+
+      function renderProductsPanel() {
+        const product = productFormProduct();
+        const subOptions = state.data.categories.flatMap((category) => (category.subcategories || []).map((sub) => ({ ...sub, categoryName: nameIn("categories", category), categoryId: category.id })));
+        const days = product.offerEndsAt ? Math.max(1, Math.ceil((new Date(product.offerEndsAt).getTime() - Date.now()) / DAY_MS)) : 7;
+        return `
+          <div class="item-list">
+            <form id="product-form" class="panel item-list">
+              <div class="split-row"><div><span class="label">${copy("Product and offer editor", "محرر المنتجات والعروض")}</span><h3 style="font-family:Georgia,serif;font-size:2rem;margin:0.25rem 0 0">${product.id ? copy("Edit product", "تعديل المنتج") : copy("Add product", "إضافة منتج")}</h3></div>${product.id ? `<button type="button" class="btn btn-ghost" data-action="cancel-product-edit">${copy("Cancel edit", "إلغاء التعديل")}</button>` : ""}</div>
+              <input type="hidden" name="id" value="${esc(product.id)}">
+              <div class="three-grid">
+                <label><span class="label">${copy("Name", "الاسم")}</span><input class="field" name="name" value="${esc(product.name)}" required></label>
+                <label><span class="label">${copy("Image URL", "رابط الصورة")}</span><input class="field" name="image" value="${esc(product.image)}"></label>
+                <label><span class="label">${copy("Category", "القسم")}</span><select class="select" name="categoryId">${state.data.categories.map((category) => `<option value="${esc(category.id)}" ${category.id === product.categoryId ? "selected" : ""}>${esc(nameIn("categories", category))}</option>`).join("")}</select></label>
+                <label><span class="label">${copy("Subcategory", "القسم الداخلي")}</span><select class="select" name="subcategoryId">${subOptions.map((sub) => `<option value="${esc(sub.id)}" ${sub.id === product.subcategoryId ? "selected" : ""}>${esc(sub.categoryName)} / ${esc(nameIn("subcategories", sub))}</option>`).join("")}</select></label>
+                <label><span class="label">${copy("Base price", "السعر الأساسي")}</span><input class="field" type="number" min="0" name="basePrice" value="${esc(product.basePrice)}" required></label>
+                <label><span class="label">${copy("Promotional price", "سعر العرض")}</span><input class="field" type="number" min="0" name="promoPrice" value="${esc(product.promoPrice || "")}"></label>
+                <label><span class="label">${copy("Offer duration days", "مدة العرض بالأيام")}</span><input class="field" type="number" min="1" name="offerDays" value="${esc(days)}"></label>
+                <label><span class="label">${copy("Secret internal stock", "المخزون الداخلي السري")}</span><input class="field" type="number" min="0" name="internalStock" value="${esc(product.internalStock)}"></label>
+                <label><span class="label">${copy("Customer threshold", "حد الظهور للعميل")}</span><input class="field" type="number" min="1" name="marketingThreshold" value="${esc(product.marketingThreshold)}"></label>
+              </div>
+              <label><span class="label">${copy("Colors and quantities, one per line: Name|#hex|quantity", "الألوان والكميات، كل سطر: الاسم|#hex|الكمية")}</span><textarea class="textarea" name="colors">${esc(colorLines(product))}</textarea></label>
+              <button class="btn btn-gold" type="submit">${copy("Save product", "حفظ المنتج")}</button>
+            </form>
+            <div class="two-grid">${state.data.products.map((item) => {
+              const p = priceInfo(item);
+              return `<div class="panel"><div class="split-row"><div><span class="label">${esc(trail(item))}</span><h3 style="font-family:Georgia,serif;font-size:1.7rem;margin:0.25rem 0 0">${esc(productTitle(item))}</h3><p class="muted small">${money(p.price)} ${p.isOffer ? `${copy("offer", "عرض")}, ${esc(offerText(item))}` : copy("base price", "السعر الأساسي")}</p><p class="muted small" style="font-family:monospace">${esc(item.barcode)}</p></div><img src="${esc(item.image || HERO_IMAGE)}" alt="${esc(productTitle(item))}" style="width:96px;height:116px;border-radius:1.2rem;object-fit:cover"></div><div class="action-row"><button class="btn btn-ghost" data-action="edit-product" data-id="${esc(item.id)}">${copy("Edit", "تعديل")}</button><button class="btn btn-danger" data-action="delete" data-collection="products" data-id="${esc(item.id)}">${copy("Delete", "حذف")}</button></div></div>`;
+            }).join("")}</div>
+          </div>
+        `;
+      }
+
+      function renderInventoryPanel() {
+        return `<div class="item-list">${state.data.products.map((product) => {
+          const a = availability(product);
+          return `<div class="panel"><div class="two-grid two-wide"><div><span class="label">${esc(trail(product))}</span><h3 style="font-family:Georgia,serif;font-size:2rem;margin:0.25rem 0 0">${esc(productTitle(product))}</h3><p class="muted small">${copy("Customer display", "ما يظهر للعميل")}: ${esc(a.status)} / ${esc(a.marketing)}</p><div class="form-grid" style="margin-top:1rem"><label><span class="label">${copy("Secret internal inventory", "المخزون الداخلي السري")}</span><input class="field inventory-input" data-id="${esc(product.id)}" data-field="internalStock" type="number" min="0" value="${esc(product.internalStock)}"></label><label><span class="label">${copy("Marketing threshold", "الحد التسويقي")}</span><input class="field inventory-input" data-id="${esc(product.id)}" data-field="marketingThreshold" type="number" min="1" value="${esc(product.marketingThreshold)}"></label></div><div class="item-list" style="margin-top:1rem"><span class="label">${copy("Color-level quantities", "كميات كل لون")}</span>${product.colors.map((color) => `<label class="split-row"><span><span class="color-dot" style="background:${esc(color.hex)}"></span> ${esc(colorTitle(color))}</span><input class="field color-qty" style="max-width:130px" type="number" min="0" data-product="${esc(product.id)}" data-color="${esc(color.id)}" value="${esc(color.quantity)}"></label>`).join("")}</div></div><div><span class="label">${copy("Admin barcode", "باركود الإدارة")}</span><div class="barcode-box" style="margin-top:0.8rem">${barcodeSvg(product.barcode)}</div><p class="muted small">${copy("Hidden from customers. Used for fulfillment and operations.", "مخفي عن العملاء ويستخدم للتجهيز والعمليات.")}</p></div></div></div>`;
+        }).join("")}</div>`;
+      }
+
+      function barcodeSvg(code) {
+        let x = 8;
+        const bars = String(code || "MN").split("").map((char, index) => {
+          const width = (char.charCodeAt(0) % 4) + 1;
+          const height = 42 + ((char.charCodeAt(0) + index) % 18);
+          const rect = `<rect x="${x}" y="8" width="${width}" height="${height}" fill="#2a1f16"></rect>`;
+          x += width + 2;
+          return rect;
+        }).join("");
+        return `<svg class="barcode" viewBox="0 0 180 74" role="img" aria-label="Barcode ${esc(code)}"><rect width="180" height="74" rx="10" fill="#fff8ec"></rect>${bars}<text x="90" y="68" text-anchor="middle" font-size="8" fill="#6f5424" font-family="monospace">${esc(code)}</text></svg>`;
+      }
+
+      function renderOrdersPanel() {
+        const statuses = ["pending", "preparing", "shipped", "completed", "cancelled"];
+        const orders = [...state.data.orders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        return `<div class="item-list">${orders.map((order) => {
+          const product = state.data.products.find((item) => item.id === order.productId);
+          const title = product ? productTitle(product) : order.productName;
+          const type = product ? trail(product) : order.productType;
+          return `<div class="panel"><div class="two-grid two-wide"><div><span class="label">${copy("Order", "طلب")} ${esc(order.id)}</span><h3 style="font-family:Georgia,serif;font-size:2rem;margin:0.25rem 0 0">${esc(title)}</h3><div class="two-grid small muted" style="margin-top:1rem"><p>${copy("Product type", "نوع المنتج")}: ${esc(type)}</p><p>${copy("Barcode", "الباركود")}: ${esc(order.barcode)}</p><p>${copy("Color", "اللون")}: ${esc(order.color)}</p><p>${copy("Requested quantity", "الكمية المطلوبة")}: ${esc(order.quantity)}</p><p>${copy("Customer", "العميل")}: ${esc(order.customerName)}</p><p>${copy("Phone", "الهاتف")}: ${esc(order.phone)}</p><p style="grid-column:1/-1">${copy("Address", "العنوان")}: ${esc(order.address)}</p></div></div><div><div class="notice"><span class="label">${copy("Total", "الإجمالي")}</span><h3 style="font-size:2rem;margin:0.4rem 0 0">${money(order.total)}</h3><p>${dateText(order.createdAt)}</p></div><label style="display:block;margin-top:1rem"><span class="label">${copy("Status", "الحالة")}</span><select class="select order-status" data-id="${esc(order.id)}">${statuses.map((status) => `<option value="${status}" ${status === order.status ? "selected" : ""}>${orderStatusLabel(status)}</option>`).join("")}</select></label></div></div></div>`;
+        }).join("")}</div>`;
+      }
+
+      function renderCustomersPanel() {
+        return `
+          <div class="item-list">
+            <form id="customer-form" class="panel item-list">
+              <span class="label">${copy("Customer management", "إدارة العملاء")}</span>
+              <div class="form-grid">
+                <input class="field" name="name" placeholder="${copy("Name", "الاسم")}" required>
+                <input class="field" name="email" type="email" placeholder="${copy("Email", "البريد الإلكتروني")}" required>
+                <textarea class="textarea" name="phones" placeholder="${copy("Phones separated by comma or line", "أرقام الهاتف مفصولة بفاصلة أو سطر")}"></textarea>
+                <textarea class="textarea" name="addresses" placeholder="${copy("Addresses separated by comma or line", "العناوين مفصولة بفاصلة أو سطر")}"></textarea>
+              </div>
+              <button class="btn btn-gold" type="submit">${copy("Add customer", "إضافة عميل")}</button>
+            </form>
+            <div class="two-grid">${state.data.customers.map((customer) => `<div class="panel"><span class="label">${esc(customer.email)}</span><h3 style="font-family:Georgia,serif;font-size:2rem;margin:0.25rem 0 0">${esc(customer.name)}</h3><div class="two-grid" style="margin-top:1rem"><div><span class="label">${copy("Phones", "الهواتف")}</span>${customer.phones.map((phone) => `<p class="muted small">${esc(phone)}</p>`).join("")}<form class="customer-detail-form" data-id="${esc(customer.id)}" data-type="phone"><div class="split-row"><input class="field" name="value" placeholder="${copy("New phone", "هاتف جديد")}"><button class="btn btn-ghost" type="submit">${copy("Add", "إضافة")}</button></div></form></div><div><span class="label">${copy("Addresses", "العناوين")}</span>${customer.addresses.map((address) => `<p class="muted small">${esc(address)}</p>`).join("")}<form class="customer-detail-form" data-id="${esc(customer.id)}" data-type="address"><div class="split-row"><input class="field" name="value" placeholder="${copy("New address", "عنوان جديد")}"><button class="btn btn-ghost" type="submit">${copy("Add", "إضافة")}</button></div></form></div></div></div>`).join("")}</div>
+          </div>
+        `;
+      }
+
+      function renderDiscountsPanel() {
+        return `
+          <div class="item-list">
+            <form id="discount-form" class="panel three-grid" style="align-items:end">
+              <label><span class="label">${copy("Code", "الكود")}</span><input class="field" name="code" placeholder="GOLD10" required></label>
+              <label><span class="label">${copy("Percent", "النسبة")}</span><input class="field" type="number" min="1" max="90" name="percent" value="10"></label>
+              <label><span class="label">${copy("Usage limit", "حد الاستخدام")}</span><input class="field" type="number" min="1" name="usageLimit" value="20"></label>
+              <button class="btn btn-gold" type="submit">${copy("Create code", "إنشاء كود")}</button>
+            </form>
+            <div class="two-grid">${state.data.discountCodes.map((discount) => `<div class="panel"><div class="split-row"><div><span class="label">${discount.active ? copy("Active", "نشط") : copy("Inactive", "غير نشط")}</span><h3 style="font-family:monospace;font-size:2rem;margin:0.25rem 0 0">${esc(discount.code)}</h3></div><button class="btn btn-danger" data-action="delete" data-collection="discountCodes" data-id="${esc(discount.id)}">${copy("Delete", "حذف")}</button></div><div class="three-grid small muted" style="margin-top:1rem"><p>${esc(discount.percent)}% ${copy("off", "خصم")}</p><p>${copy("Used", "مستخدم")} ${esc(discount.used)} / ${esc(discount.usageLimit)}</p><p>${remainingUses(discount)} ${copy("uses remaining", "استخدامات متبقية")}</p></div><button class="btn btn-ghost" style="margin-top:1rem" data-action="toggle-discount" data-id="${esc(discount.id)}" ${remainingUses(discount) <= 0 ? "disabled" : ""}>${discount.active ? copy("Deactivate", "إيقاف") : copy("Activate", "تفعيل")}</button></div>`).join("")}</div>
+          </div>
+        `;
+      }
+
+      function renderAdminsPanel() {
+        return `
+          <div class="item-list">
+            <form id="admin-form" class="panel item-list">
+              <div><span class="label">${copy("Equivalent operational privileges", "صلاحيات تشغيل مكافئة")}</span><h3 style="font-family:Georgia,serif;font-size:2rem;margin:0.25rem 0 0">${copy("Create sub-admin", "إنشاء مدير فرعي")}</h3><p class="muted small">${copy("Main owner credentials are not shown in the customer storefront. Sub-admin passwords are stored as browser-generated hashes.", "بيانات المالك الرئيسي لا تظهر في واجهة العملاء. كلمات مرور المديرين الفرعيين تحفظ كهاش من المتصفح.")}</p></div>
+              <div class="form-grid"><input class="field" name="username" placeholder="${copy("Sub-admin username", "اسم المدير الفرعي")}" required><input class="field" type="password" name="password" placeholder="${copy("Temporary password", "كلمة مرور مؤقتة")}" required></div>
+              ${state.message ? `<p class="error">${esc(state.message)}</p>` : ""}
+              <button class="btn btn-gold" type="submit">${copy("Create sub-admin", "إنشاء مدير فرعي")}</button>
+            </form>
+            <div class="two-grid">${state.data.admins.map((admin) => `<div class="panel"><span class="label">${copy("Sub-admin", "مدير فرعي")}</span><h3 style="font-family:Georgia,serif;font-size:2rem;margin:0.25rem 0 0">${esc(admin.username)}</h3><p class="muted small">${copy("Created", "تم الإنشاء")} ${dateText(admin.createdAt)}</p><button class="btn btn-danger" data-action="delete" data-collection="admins" data-id="${esc(admin.id)}">${copy("Delete access", "حذف الصلاحية")}</button></div>`).join("")}</div>
+          </div>
+        `;
+      }
+
+      function renderLayoutPanel() {
+        const layout = state.data.layout;
+        return `
+          <div class="item-list">
+            <div class="panel"><span class="label">${copy("Drag-and-drop homepage sections", "سحب وإفلات أقسام الصفحة")}</span><h3 style="font-family:Georgia,serif;font-size:2rem;margin:0.25rem 0 0">${copy("Interactive layout customizer", "مخصص تنسيق تفاعلي")}</h3><p class="muted small">${copy("Drag each section with mouse or touch. Tap size to cycle full, wide, compact, and half. Every change writes to Firebase layout.", "اسحب كل قسم بالماوس أو اللمس. اضغط على الحجم للتبديل بين كامل، واسع، مضغوط، ونصف. كل تغيير يحفظ في فايربيز.")}</p><div class="action-row"><button class="btn btn-ghost" data-action="layout-preset" data-preset="reverse">${copy("Reverse order", "عكس الترتيب")}</button><button class="btn btn-ghost" data-action="layout-preset" data-preset="twoTop">${copy("Two top, one base", "اثنان بالأعلى وواحد بالأسفل")}</button><button class="btn btn-ghost" data-action="layout-preset" data-preset="editorial">${copy("Swap wide and compact", "تبديل الواسع والمضغوط")}</button></div></div>
+            <form id="hero-form" class="panel form-grid" style="align-items:end"><label><span class="label">${copy("Full-bleed hero image", "صورة هيرو كاملة العرض")}</span><input class="field" name="heroImage" value="${esc(layout.heroImage || HERO_IMAGE)}"></label><button class="btn btn-gold" type="submit">${copy("Save hero", "حفظ الهيرو")}</button></form>
+            <div class="two-grid two-wide">
+              <div class="panel drag-list">${layout.sections.map((section) => `<div class="drag-item ${state.draggingSectionId === section.id ? "dragging" : ""}" draggable="true" data-section="${esc(section.id)}"><div class="split-row"><div><span class="label">${copy("Drag handle", "مقبض السحب")}</span><h4 style="font-family:Georgia,serif;font-size:1.55rem;margin:0.2rem 0 0">${esc(sectionLabel(section))}</h4></div><button class="btn btn-ghost" data-action="cycle-span" data-id="${esc(section.id)}">${spanLabel(section.span)}</button></div></div>`).join("")}</div>
+              <div class="panel"><span class="label">${copy("Live composition preview", "معاينة التكوين المباشر")}</span><div class="layout-preview" style="margin-top:1rem">${layout.sections.map((section) => `<div class="preview-block span-${esc(section.span)}"><h4 style="font-family:Georgia,serif;font-size:1.35rem;margin:0">${esc(sectionLabel(section))}</h4><p class="muted small">${spanLabel(section.span)} ${copy("section", "قسم")}</p></div>`).join("")}</div></div>
+            </div>
+          </div>
+        `;
+      }
+
+      function renderSyncPanel() {
+        return `<div class="panel"><span class="label">Firebase Realtime Database</span><h3 style="font-family:Georgia,serif;font-size:2rem;margin:0.25rem 0 0">${copy("Live data connection", "اتصال بيانات مباشر")}</h3><div class="item-list muted small" style="margin-top:1rem"><p>${copy("Endpoint", "الرابط")}: ${FIREBASE_URL}</p><p>${copy("Status", "الحالة")}: ${esc(state.status.message)}</p><p>${copy("Last sync", "آخر مزامنة")}: ${esc(state.status.lastSync)}</p><p>${copy("Realtime stream", "البث المباشر")}: ${state.status.realtime ? copy("enabled", "مفعل") : copy("polling fallback enabled", "التحديث الدوري مفعل")}</p></div><button class="btn btn-gold" data-action="refresh">${copy("Refresh now", "تحديث الآن")}</button></div>`;
+      }
+
+      function parseColorLines(text) {
+        const lines = String(text || "").split("\n").map((line) => line.trim()).filter(Boolean);
+        const parsed = lines.map((line) => {
+          const [name, hex, qty] = line.split("|").map((part) => part.trim());
+          return { id: uid("color"), name: name || "Default", hex: /^#[0-9a-f]{6}$/i.test(hex) ? hex : "#d8b86a", quantity: Math.max(0, Number(qty) || 0) };
+        });
+        return parsed.length ? parsed : [{ id: uid("color"), name: "Gold", hex: "#d8b86a", quantity: 1 }];
+      }
+
+      async function placeOrder(form) {
+        const product = state.data.products.find((item) => item.id === form.get("productId"));
+        if (!product) throw new Error(copy("Product no longer exists.", "المنتج لم يعد موجودا."));
+        const color = product.colors.find((item) => item.id === form.get("colorId")) || product.colors[0];
+        if (!color) throw new Error(copy("Product color is unavailable.", "لون المنتج غير متاح."));
+        const quantity = Math.max(1, Math.floor(Number(form.get("quantity")) || 1));
+        const maxQty = Math.min(product.internalStock, color.quantity);
+        if (quantity > maxQty) throw new Error(copy("Requested quantity is not available.", "الكمية المطلوبة غير متاحة."));
+        const codeValue = String(form.get("discountCode") || "").trim().toUpperCase();
+        const discount = codeValue ? state.data.discountCodes.find((item) => item.code.toUpperCase() === codeValue && item.active && remainingUses(item) > 0) : null;
+        if (codeValue && !discount) throw new Error(copy("Discount code is inactive or fully used.", "كود الخصم غير مفعل أو تم استخدامه بالكامل."));
+
+        const email = String(form.get("email") || "").trim();
+        const existingCustomer = state.data.customers.find((customer) => customer.email.toLowerCase() === email.toLowerCase());
+        const customer = existingCustomer
+          ? {
+              ...existingCustomer,
+              name: String(form.get("customerName") || existingCustomer.name).trim(),
+              phones: uniqueValues([...existingCustomer.phones, form.get("phone")]),
+              addresses: uniqueValues([...existingCustomer.addresses, form.get("address")])
             }
-
-            db.ref('admins').once('value').then(snapshot => {
-                const admins = snapshot.val() || {};
-                let found = false;
-                for (let key in admins) {
-                    if (admins[key].username === u && admins[key].password === p) {
-                        found = true;
-                        break;
-                    }
-                }
-                if (found) {
-                    localStorage.setItem('aurelia_admin', u);
-                    initDashboard(u);
-                } else {
-                    document.getElementById('loginError').classList.remove('hidden');
-                }
-            }).catch(err => {
-                alert("خطأ في الاتصال بقاعدة البيانات: " + err.message);
-            });
-        }
-
-        function initDashboard(user) {
-            document.getElementById('loginScreen').classList.add('hidden');
-            document.getElementById('dashboardApp').classList.remove('hidden');
-            document.getElementById('adminNameDisplay').innerText = user;
-            loadAllData();
-        }
-
-        function logout() {
-            localStorage.removeItem('aurelia_admin');
-            location.reload();
-        }
-
-        window.onload = function() {
-            const activeUser = localStorage.getItem('aurelia_admin');
-            if (activeUser) {
-                initDashboard(activeUser);
-            }
-        };
-
-        // Tab Navigation
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.querySelectorAll('.tab-btn').forEach(el => {
-                el.classList.remove('active', 'bg-luxury-gold/20', 'text-luxury-gold');
-                el.classList.add('text-gray-300');
-            });
-
-            document.getElementById('tab-' + tabId).classList.remove('hidden');
-            const activeBtn = document.querySelector(`[data-tab="${tabId}"]`);
-            activeBtn.classList.add('bg-luxury-gold/20', 'text-luxury-gold');
-            activeBtn.classList.remove('text-gray-300');
-
-            const titles = {
-                'overview': 'نظرة عامة',
-                'categories': 'المجلدات والأقسام',
-                'products': 'المنتجات والمخزون',
-                'orders': 'إدارة الطلبات',
-                'customers': 'قاعدة العملاء',
-                'promos': 'أكواد الخصم',
-                'layout': 'تخطيط الواجهة',
-                'admins': 'حسابات الإدارة'
+          : {
+              id: uid("cus"),
+              name: String(form.get("customerName") || "").trim(),
+              email,
+              phones: uniqueValues([form.get("phone")]),
+              addresses: uniqueValues([form.get("address")]),
+              createdAt: nowIso()
             };
-            document.getElementById('currentTabTitle').innerText = titles[tabId];
-        }
+        const updatedProduct = {
+          ...product,
+          internalStock: Math.max(0, product.internalStock - quantity),
+          colors: product.colors.map((item) => (item.id === color.id ? { ...item, quantity: Math.max(0, item.quantity - quantity) } : item))
+        };
+        const p = priceInfo(product);
+        const subtotal = p.price * quantity;
+        const discountAmount = discount ? Math.round((subtotal * discount.percent) / 100) : 0;
+        const updatedDiscount = discount ? { ...discount, used: discount.used + 1, active: discount.used + 1 < discount.usageLimit } : null;
+        const order = {
+          id: uid("ord"),
+          productId: product.id,
+          productType: trail(product),
+          productName: product.name,
+          barcode: product.barcode,
+          color: color.name,
+          quantity,
+          customerId: customer.id,
+          customerName: customer.name,
+          phone: String(form.get("phone") || "").trim(),
+          address: String(form.get("address") || "").trim(),
+          unitPrice: p.price,
+          discountCode: updatedDiscount?.code || null,
+          discountAmount,
+          total: Math.max(0, subtotal - discountAmount),
+          status: "pending",
+          createdAt: nowIso()
+        };
 
-        // Data Loading & Syncing from Firebase
-        function loadAllData() {
-            // Categories
-            db.ref('categories').on('value', snapshot => {
-                const data = snapshot.val() || {};
-                const list = document.getElementById('categoriesList');
-                const select = document.getElementById('prodCategory');
-                list.innerHTML = '';
-                select.innerHTML = '<option value="">اختر القسم والفرع</option>';
+        state.data.products = upsert(state.data.products, updatedProduct);
+        state.data.customers = upsert(state.data.customers, customer);
+        state.data.orders = [order, ...state.data.orders];
+        if (updatedDiscount) state.data.discountCodes = upsert(state.data.discountCodes, updatedDiscount);
+        setStatus({ phase: "saving", message: "Writing order, stock, customer, and discount data" });
+        const writes = [
+          api(`products/${updatedProduct.id}`, { method: "PUT", body: JSON.stringify(updatedProduct) }),
+          api(`customers/${customer.id}`, { method: "PUT", body: JSON.stringify(customer) }),
+          api(`orders/${order.id}`, { method: "PUT", body: JSON.stringify(order) })
+        ];
+        if (updatedDiscount) writes.push(api(`discountCodes/${updatedDiscount.id}`, { method: "PUT", body: JSON.stringify(updatedDiscount) }));
+        await Promise.all(writes);
+        state.message = copy(
+          `Order ${order.id} saved. Operations can view barcode, address, phone, color, and stock changes.`,
+          `تم حفظ الطلب ${order.id}. يمكن للإدارة رؤية الباركود والعنوان والهاتف واللون وتغييرات المخزون.`
+        );
+        setStatus({ phase: "online", message: "Order saved and inventory updated", lastSync: new Date().toLocaleTimeString() });
+      }
 
-                for (let id in data) {
-                    const cat = data[id];
-                    list.innerHTML += `<div class="p-4 bg-luxury-cream rounded-lg border border-luxury-gold/20 flex justify-between items-center">
-                        <div><strong class="text-luxury-dark">${cat.name}</strong> <span class="text-xs text-gray-500 mr-2">(${cat.sub || 'بدون تفريعات'})</span></div>
-                        <button onclick="deleteCategory('${id}')" class="text-red-500 hover:text-red-700 text-sm"><i class="fa-solid fa-trash"></i></button>
-                    </div>`;
-                    if (cat.sub) {
-                        cat.sub.split(',').forEach(sub => {
-                            select.innerHTML += `<option value="${cat.name} > ${sub.trim()}">${cat.name} > ${sub.trim()}</option>`;
-                        });
-                    } else {
-                        select.innerHTML += `<option value="${cat.name}">${cat.name}</option>`;
-                    }
-                }
-            });
+      function reorderSections(sections, activeId, overId) {
+        const activeIndex = sections.findIndex((section) => section.id === activeId);
+        const overIndex = sections.findIndex((section) => section.id === overId);
+        if (activeIndex < 0 || overIndex < 0 || activeIndex === overIndex) return sections;
+        const next = [...sections];
+        const [moved] = next.splice(activeIndex, 1);
+        next.splice(overIndex, 0, moved);
+        return next;
+      }
 
-            // Products
-            db.ref('products').on('value', snapshot => {
-                const data = snapshot.val() || {};
-                const tbody = document.getElementById('productsTableBody');
-                tbody.innerHTML = '';
-                let count = 0;
+      function cycleSpan(id) {
+        const order = ["full", "wide", "compact", "half"];
+        const layout = state.data.layout;
+        layout.sections = layout.sections.map((section) => section.id === id ? { ...section, span: order[(order.indexOf(section.span) + 1) % order.length] } : section);
+        saveLayout({ ...layout });
+      }
 
-                for (let id in data) {
-                    const p = data[id];
-                    count++;
-                    const isSoldOut = p.internalStock <= 0;
-                    
-                    let priceDisplay = `${p.price} ج.م`;
-                    if (p.discountPrice) {
-                        const now = new Date().getTime();
-                        if (now > p.discountExpiry) {
-                            db.ref(`products/${id}`).update({ discountPrice: null, discountExpiry: null });
-                        } else {
-                            priceDisplay = `<span class="line-through text-gray-400 text-xs">${p.price}</span> <span class="text-green-600 font-bold">${p.discountPrice} ج.م</span>`;
-                        }
-                    }
+      async function handleSubmit(event) {
+        const form = event.target;
+        if (!(form instanceof HTMLFormElement)) return;
+        event.preventDefault();
+        const data = new FormData(form);
+        state.message = "";
 
-                    let stockStatusText = isSoldOut ? 'Sold Out' : 'متوفر';
-                    if (!isSoldOut && p.internalStock <= (p.alertThreshold || 5)) {
-                        stockStatusText = `متبقي ${p.internalStock} (تنبيه ظهور)`;
-                    }
-
-                    tbody.innerHTML += `<tr class="border-b border-gray-100 text-sm">
-                        <td class="py-3 px-4"><img src="${p.img}" class="w-10 h-10 object-cover rounded-md border"></td>
-                        <td class="py-3 px-4 font-medium">${p.name}</td>
-                        <td class="py-3 px-4 text-gray-500">${p.category}</td>
-                        <td class="py-3 px-4">${priceDisplay}</td>
-                        <td class="py-3 px-4 font-mono text-xs bg-gray-100 px-2 py-1 rounded inline-block">${p.barcode}</td>
-                        <td class="py-3 px-4">${p.internalStock}</td>
-                        <td class="py-3 px-4">${p.alertThreshold || 5}</td>
-                        <td class="py-3 px-4"><span class="px-2.5 py-1 rounded-full text-xs font-semibold ${isSoldOut ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}">${stockStatusText}</span></td>
-                        <td class="py-3 px-4"><button onclick="deleteProduct('${id}')" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button></td>
-                    </tr>`;
-                }
-                document.getElementById('statProducts').innerText = count;
-            });
-
-            // Orders
-            db.ref('orders').on('value', snapshot => {
-                const data = snapshot.val() || {};
-                const tbody = document.getElementById('ordersTableBody');
-                tbody.innerHTML = '';
-                let count = 0;
-                for (let id in data) {
-                    const o = data[id];
-                    count++;
-                    tbody.innerHTML += `<tr class="border-b border-gray-100 text-sm">
-                        <td class="py-3 px-4 font-medium">${o.customerName}</td>
-                        <td class="py-3 px-4">${o.customerPhone}</td>
-                        <td class="py-3 px-4">${o.address}</td>
-                        <td class="py-3 px-4">${o.productName}</td>
-                        <td class="py-3 px-4 font-mono text-xs">${o.barcode} (${o.color})</td>
-                        <td class="py-3 px-4 font-bold">${o.quantity}</td>
-                        <td class="py-3 px-4"><button onclick="deleteOrder('${id}')" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button></td>
-                    </tr>`;
-                }
-                document.getElementById('statOrders').innerText = count;
-            });
-
-            // Customers
-            db.ref('customers').on('value', snapshot => {
-                const data = snapshot.val() || {};
-                const tbody = document.getElementById('customersTableBody');
-                tbody.innerHTML = '';
-                let count = 0;
-                for (let id in data) {
-                    const c = data[id];
-                    count++;
-                    tbody.innerHTML += `<tr class="border-b border-gray-100 text-sm">
-                        <td class="py-3 px-4 font-medium">${c.name}</td>
-                        <td class="py-3 px-4">${c.phones || '-'}</td>
-                        <td class="py-3 px-4">${c.emails || '-'}</td>
-                        <td class="py-3 px-4">${c.addresses || '-'}</td>
-                        <td class="py-3 px-4"><button onclick="deleteCustomer('${id}')" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button></td>
-                    </tr>`;
-                }
-                document.getElementById('statCustomers').innerText = count;
-            });
-
-            // Promos
-            db.ref('promos').on('value', snapshot => {
-                const data = snapshot.val() || {};
-                const list = document.getElementById('promosList');
-                list.innerHTML = '';
-                let count = 0;
-                for (let id in data) {
-                    const pr = data[id];
-                    count++;
-                    list.innerHTML += `<div class="p-4 bg-luxury-cream rounded-lg border border-luxury-gold/20 flex justify-between items-center text-sm">
-                        <div><strong class="font-mono text-luxury-gold">${pr.code}</strong> - خصم: ${pr.discount} | متبقي الاستخدام: <span class="font-bold text-red-600">${pr.limit}</span> مرة</div>
-                        <button onclick="deletePromo('${id}')" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
-                    </div>`;
-                }
-                document.getElementById('statPromos').innerText = count;
-            });
-
-            // Admins
-            db.ref('admins').on('value', snapshot => {
-                const data = snapshot.val() || {};
-                const list = document.getElementById('adminsList');
-                list.innerHTML = '';
-                for (let id in data) {
-                    const ad = data[id];
-                    list.innerHTML += `<div class="p-3 bg-gray-50 rounded-lg border flex justify-between items-center text-sm">
-                        <span>${ad.username}</span>
-                        <button onclick="deleteAdmin('${id}')" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button>
-                    </div>`;
-                }
-            });
-        }
-
-        // Actions & Forms Submission
-        function addCategory(e) {
-            e.preventDefault();
-            db.ref('categories').push({
-                name: document.getElementById('catName').value,
-                sub: document.getElementById('subCatName').value
-            }).then(() => { e.target.reset(); alert("تم حفظ القسم بنجاح!"); }).catch(err => alert(err.message));
-        }
-        function deleteCategory(id) { db.ref(`categories/${id}`).remove(); }
-
-        function addProduct(e) {
-            e.preventDefault();
-            const days = parseInt(document.getElementById('prodDiscountDays').value) || 7;
-            const discountPrice = document.getElementById('prodDiscountPrice').value;
-            let discountExpiry = null;
-            if (discountPrice) {
-                discountExpiry = new Date().getTime() + (days * 24 * 60 * 60 * 1000);
+        if (form.id === "login-form") {
+          const username = String(data.get("username") || "");
+          const password = String(data.get("password") || "");
+          if (isMainAdmin(username, password)) {
+            state.session = { username: "Mohamed Nasser", role: "main" };
+            state.view = "admin";
+          } else {
+            const hash = await sha256(password);
+            const admin = state.data.admins.find((item) => item.username.toLowerCase() === username.trim().toLowerCase() && item.passwordHash === hash);
+            if (admin) {
+              state.session = { username: admin.username, role: "sub" };
+              state.view = "admin";
+            } else {
+              state.message = copy("Invalid administrator credentials.", "بيانات دخول الإدارة غير صحيحة.");
             }
-
-            db.ref('products').push({
-                name: document.getElementById('prodName').value,
-                img: document.getElementById('prodImg').value,
-                category: document.getElementById('prodCategory').value,
-                price: parseFloat(document.getElementById('prodPrice').value),
-                discountPrice: discountPrice ? parseFloat(discountPrice) : null,
-                discountExpiry: discountExpiry,
-                barcode: document.getElementById('prodBarcode').value,
-                color: document.getElementById('prodColor').value,
-                internalStock: parseInt(document.getElementById('prodInternalStock').value),
-                alertThreshold: parseInt(document.getElementById('prodAlertThreshold').value) || 5
-            }).then(() => { e.target.reset(); alert("تم إضافة المنتج بنجاح!"); }).catch(err => alert(err.message));
+          }
+          render();
+          return;
         }
-        function deleteProduct(id) { db.ref(`products/${id}`).remove(); }
 
-        function addOrder(e) {
-            e.preventDefault();
-            db.ref('orders').push({
-                customerName: document.getElementById('orderCustName').value,
-                customerPhone: document.getElementById('orderPhone').value,
-                address: document.getElementById('orderAddress').value,
-                productName: document.getElementById('orderProdName').value,
-                barcode: document.getElementById('orderBarcode').value,
-                color: document.getElementById('orderColor').value,
-                quantity: parseInt(document.getElementById('orderQty').value)
-            }).then(() => { e.target.reset(); alert("تم تسجيل الطلب بنجاح!"); }).catch(err => alert(err.message));
+        if (form.id === "checkout-form") {
+          try {
+            await placeOrder(data);
+          } catch (error) {
+            state.message = `${copy("Error", "خطأ")}: ${error.message || copy("Could not place order.", "تعذر تنفيذ الطلب.")}`;
+            render();
+          }
+          return;
         }
-        function deleteOrder(id) { db.ref(`orders/${id}`).remove(); }
 
-        function addCustomer(e) {
-            e.preventDefault();
-            db.ref('customers').push({
-                name: document.getElementById('custName').value,
-                phones: document.getElementById('custPhones').value,
-                emails: document.getElementById('custEmails').value,
-                addresses: document.getElementById('custAddresses').value
-            }).then(() => { e.target.reset(); alert("تم حفظ بيانات العميل بنجاح!"); }).catch(err => alert(err.message));
+        if (form.id === "category-form") {
+          await saveItem("categories", { id: uid("cat"), name: String(data.get("name") || "").trim(), subcategories: [] });
+          return;
         }
-        function deleteCustomer(id) { db.ref(`customers/${id}`).remove(); }
 
-        function addPromo(e) {
-            e.preventDefault();
-            db.ref('promos').push({
-                code: document.getElementById('promoCode').value,
-                discount: document.getElementById('promoDiscount').value,
-                limit: parseInt(document.getElementById('promoLimit').value)
-            }).then(() => { e.target.reset(); alert("تم إضافة كود الخصم بنجاح!"); }).catch(err => alert(err.message));
+        if (form.classList.contains("subcat-form")) {
+          const category = state.data.categories.find((item) => item.id === form.dataset.category);
+          if (category) {
+            await saveItem("categories", { ...category, subcategories: [...category.subcategories, { id: uid("sub"), name: String(data.get("name") || "").trim() }] });
+          }
+          return;
         }
-        function deletePromo(id) { db.ref(`promos/${id}`).remove(); }
 
-        function addAdminAccount(e) {
-            e.preventDefault();
-            db.ref('admins').push({
-                username: document.getElementById('newAdminUser').value,
-                password: document.getElementById('newAdminPass').value
-            }).then(() => { e.target.reset(); alert("تم إنشاء الحساب الإداري بنجاح!"); }).catch(err => alert(err.message));
+        if (form.id === "product-form") {
+          const id = String(data.get("id") || "");
+          const existing = state.data.products.find((item) => item.id === id);
+          const promoPrice = String(data.get("promoPrice") || "").trim() ? Number(data.get("promoPrice")) || null : null;
+          const subcategoryId = String(data.get("subcategoryId") || "");
+          const product = {
+            id: id || uid("prod"),
+            name: String(data.get("name") || "").trim(),
+            image: String(data.get("image") || "").trim() || HERO_IMAGE,
+            categoryId: String(data.get("categoryId") || ""),
+            subcategoryId,
+            basePrice: Number(data.get("basePrice")) || 0,
+            promoPrice,
+            offerEndsAt: promoPrice ? new Date(Date.now() + (Number(data.get("offerDays")) || 7) * DAY_MS).toISOString() : null,
+            internalStock: Math.max(0, Number(data.get("internalStock")) || 0),
+            marketingThreshold: Math.max(1, Number(data.get("marketingThreshold")) || 1),
+            barcode: existing?.barcode || generateBarcode(data.get("categoryId"), data.get("name")),
+            colors: parseColorLines(data.get("colors")),
+            createdAt: existing?.createdAt || nowIso()
+          };
+          await saveItem("products", product);
+          state.productEditId = null;
+          render();
+          return;
         }
-        function deleteAdmin(id) { db.ref(`admins/${id}`).remove(); }
+
+        if (form.id === "customer-form") {
+          await saveItem("customers", {
+            id: uid("cus"),
+            name: String(data.get("name") || "").trim(),
+            email: String(data.get("email") || "").trim(),
+            phones: splitValues(data.get("phones")),
+            addresses: splitValues(data.get("addresses")),
+            createdAt: nowIso()
+          });
+          return;
+        }
+
+        if (form.classList.contains("customer-detail-form")) {
+          const customer = state.data.customers.find((item) => item.id === form.dataset.id);
+          const value = String(data.get("value") || "").trim();
+          if (customer && value) {
+            const updated = form.dataset.type === "phone" ? { ...customer, phones: uniqueValues([...customer.phones, value]) } : { ...customer, addresses: uniqueValues([...customer.addresses, value]) };
+            await saveItem("customers", updated);
+          }
+          return;
+        }
+
+        if (form.id === "discount-form") {
+          await saveItem("discountCodes", {
+            id: uid("disc"),
+            code: String(data.get("code") || "").trim().toUpperCase(),
+            percent: Math.max(1, Math.min(90, Number(data.get("percent")) || 1)),
+            usageLimit: Math.max(1, Number(data.get("usageLimit")) || 1),
+            used: 0,
+            active: true,
+            createdAt: nowIso()
+          });
+          return;
+        }
+
+        if (form.id === "admin-form") {
+          const username = String(data.get("username") || "").trim();
+          const password = String(data.get("password") || "");
+          if (!username || password.length < 6) {
+            state.message = copy("Enter a username and a password of at least 6 characters.", "اكتب اسم مستخدم وكلمة مرور لا تقل عن 6 أحرف.");
+            render();
+            return;
+          }
+          if (state.data.admins.some((item) => item.username.toLowerCase() === username.toLowerCase())) {
+            state.message = copy("A sub-admin with this username already exists.", "يوجد مدير فرعي بهذا الاسم بالفعل.");
+            render();
+            return;
+          }
+          await saveItem("admins", { id: uid("admin"), username, passwordHash: await sha256(password), createdAt: nowIso() });
+          return;
+        }
+
+        if (form.id === "hero-form") {
+          await saveLayout({ ...state.data.layout, heroImage: String(data.get("heroImage") || "").trim() || HERO_IMAGE });
+        }
+      }
+
+      async function handleClick(event) {
+        const target = event.target.closest("[data-action]");
+        if (!target) return;
+        const action = target.dataset.action;
+        if (action === "scroll-top") window.scrollTo({ top: 0, behavior: "smooth" });
+        if (action === "toggle-language") {
+          state.lang = state.lang === "ar" ? "en" : "ar";
+          localStorage.setItem("mn-language", state.lang);
+          render();
+        }
+        if (action === "open-admin") { state.view = "admin"; state.message = ""; render(); }
+        if (action === "open-store") { state.view = "store"; state.message = ""; render(); }
+        if (action === "logout") { state.session = null; state.message = ""; render(); }
+        if (action === "filter") { state.categoryFilter = target.dataset.category || "all"; render(); }
+        if (action === "select-product") { state.selectedProductId = target.dataset.product; state.message = ""; render(); }
+        if (action === "close-modal") { state.selectedProductId = null; state.message = ""; render(); }
+        if (action === "tab") { state.tab = target.dataset.tab || "overview"; state.message = ""; render(); }
+        if (action === "refresh") await loadData(false);
+        if (action === "delete") await deleteItem(target.dataset.collection, target.dataset.id);
+        if (action === "edit-product") { state.productEditId = target.dataset.id; render(); window.scrollTo({ top: 0, behavior: "smooth" }); }
+        if (action === "cancel-product-edit") { state.productEditId = null; render(); }
+        if (action === "toggle-discount") {
+          const discount = state.data.discountCodes.find((item) => item.id === target.dataset.id);
+          if (discount && remainingUses(discount) > 0) await saveItem("discountCodes", { ...discount, active: !discount.active });
+        }
+        if (action === "cycle-span") cycleSpan(target.dataset.id);
+        if (action === "layout-preset") {
+          let sections = [...state.data.layout.sections];
+          if (target.dataset.preset === "reverse") sections.reverse();
+          if (target.dataset.preset === "twoTop") sections = sections.map((section, index) => ({ ...section, span: index < 2 ? "half" : "full" }));
+          if (target.dataset.preset === "editorial") sections = sections.map((section, index) => ({ ...section, span: index % 2 === 0 ? "wide" : "compact" }));
+          await saveLayout({ ...state.data.layout, sections });
+        }
+      }
+
+      async function handleChange(event) {
+        const target = event.target;
+        if (target.classList.contains("order-status")) {
+          const order = state.data.orders.find((item) => item.id === target.dataset.id);
+          if (order) await saveItem("orders", { ...order, status: target.value });
+        }
+        if (target.classList.contains("inventory-input")) {
+          const product = state.data.products.find((item) => item.id === target.dataset.id);
+          if (product) await saveItem("products", { ...product, [target.dataset.field]: Math.max(target.dataset.field === "marketingThreshold" ? 1 : 0, Number(target.value) || 0) });
+        }
+        if (target.classList.contains("color-qty")) {
+          const product = state.data.products.find((item) => item.id === target.dataset.product);
+          if (product) await saveItem("products", { ...product, colors: product.colors.map((color) => color.id === target.dataset.color ? { ...color, quantity: Math.max(0, Number(target.value) || 0) } : color) });
+        }
+      }
+
+      function handleDragStart(event) {
+        const item = event.target.closest(".drag-item");
+        if (!item) return;
+        state.draggingSectionId = item.dataset.section;
+        if (event.dataTransfer) event.dataTransfer.effectAllowed = "move";
+        render();
+      }
+
+      async function handleDrop(event) {
+        const item = event.target.closest(".drag-item");
+        if (!item || !state.draggingSectionId) return;
+        event.preventDefault();
+        const sections = reorderSections(state.data.layout.sections, state.draggingSectionId, item.dataset.section);
+        state.draggingSectionId = null;
+        await saveLayout({ ...state.data.layout, sections });
+      }
+
+      function handleDragOver(event) {
+        if (event.target.closest(".drag-item")) event.preventDefault();
+      }
+
+      function handlePointerDown(event) {
+        const item = event.target.closest(".drag-item");
+        if (item) {
+          state.draggingSectionId = item.dataset.section;
+          render();
+        }
+      }
+
+      function handlePointerOver(event) {
+        const item = event.target.closest(".drag-item");
+        if (!item || !state.draggingSectionId || state.draggingSectionId === item.dataset.section) return;
+        state.data.layout.sections = reorderSections(state.data.layout.sections, state.draggingSectionId, item.dataset.section);
+        render();
+      }
+
+      async function endPointerDrag() {
+        if (!state.draggingSectionId) return;
+        state.draggingSectionId = null;
+        await saveLayout({ ...state.data.layout });
+      }
+
+      app.addEventListener("submit", handleSubmit);
+      app.addEventListener("click", handleClick);
+      app.addEventListener("change", handleChange);
+      app.addEventListener("dragstart", handleDragStart);
+      app.addEventListener("dragover", handleDragOver);
+      app.addEventListener("drop", handleDrop);
+      app.addEventListener("pointerdown", handlePointerDown);
+      app.addEventListener("pointerover", handlePointerOver);
+      window.addEventListener("pointerup", endPointerDrag);
+      window.addEventListener("resize", updateDevice);
+      window.addEventListener("orientationchange", updateDevice);
+
+      function subscribeRealtime() {
+        if (!("EventSource" in window)) return;
+        const source = new EventSource(firebaseUrl(""));
+        const refresh = () => loadData(true);
+        source.addEventListener("put", refresh);
+        source.addEventListener("patch", refresh);
+        source.onopen = () => setStatus({ realtime: true }, false);
+        source.onerror = () => setStatus({ realtime: false }, false);
+      }
+
+      updateDevice();
+      loadData(false);
+      subscribeRealtime();
+      setInterval(() => loadData(true), 30000);
+      setInterval(enforceAutomations, 60000);
     </script>
-</body>
+  </body>
 </html>
