@@ -1,1056 +1,2321 @@
-<!DOCTYPE html>
-<html lang="en" dir="ltr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AURÉLIA | Fine Jewelry</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        cream: '#FDFBF7',
-                        softbeige: '#F4EFEA',
-                        luxgold: '#D4AF37',
-                        darkgold: '#AA7C11',
-                        luxdark: '#1A1A1A',
-                    },
-                    fontFamily: {
-                        serif: ['Playfair Display', 'Georgia', 'serif'],
-                        sans: ['Montserrat', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
-    <!-- FontAwesome CDN -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+import {
+  type ButtonHTMLAttributes,
+  type FormEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { cn } from "./utils/cn";
 
-    <style>
-        body {
-            font-family: 'Montserrat', sans-serif;
-            background-color: #FDFBF7;
-            color: #1A1A1A;
-        }
-        h1, h2, h3, h4, .font-serif {
-            font-family: 'Playfair Display', Georgia, serif;
-        }
-        .gold-gradient {
-            background: linear-gradient(135deg, #F3E7C4 0%, #D4AF37 50%, #AA7C11 100%);
-        }
-        .gold-text-gradient {
-            background: linear-gradient(135deg, #C5A059 0%, #D4AF37 50%, #996515 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        /* Custom scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #FDFBF7;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #D4AF37;
-            border-radius: 4px;
-        }
-    </style>
-</head>
-<body class="bg-cream text-luxdark antialiased selection:bg-luxgold selection:text-white">
+const FIREBASE_URL = "https://mohamed-a9564-default-rtdb.firebaseio.com";
+const DAY_MS = 24 * 60 * 60 * 1000;
+const HERO_IMAGE =
+  "https://images.pexels.com/photos/4938198/pexels-photo-4938198.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=900&w=1600";
+const COSMETIC_IMAGE =
+  "https://images.pexels.com/photos/4202329/pexels-photo-4202329.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=900&w=1600";
+const PERFUME_IMAGE =
+  "https://images.pexels.com/photos/12402358/pexels-photo-12402358.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=900&w=1600";
+const EARRINGS_IMAGE =
+  "https://images.pexels.com/photos/4938267/pexels-photo-4938267.jpeg?auto=compress&cs=tinysrgb&fit=crop&h=900&w=1600";
 
-    <!-- Top Announcement Bar -->
-    <div class="bg-luxdark text-cream text-xs py-2 px-4 text-center tracking-widest uppercase">
-        <span id="announcement-text">Complimentary Shipping Across Egypt via البريد المصري | Exclusive Fine Jewelry</span>
-    </div>
+type DeviceType = "mobile" | "tablet" | "desktop";
+type SyncPhase = "loading" | "online" | "saving" | "offline";
+type LayoutSpan = "full" | "wide" | "compact" | "half";
+type LayoutSectionId = "collection" | "offers" | "ritual" | "atelier";
+type OrderStatus = "pending" | "preparing" | "shipped" | "completed" | "cancelled";
 
-    <!-- Navigation Bar -->
-    <header class="sticky top-0 z-50 bg-cream/90 backdrop-blur-md border-b border-softbeige transition-all duration-300">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-            <!-- Left: Mobile Menu & Language Toggle -->
-            <div class="flex items-center space-x-4 space-x-reverse">
-                <button id="mobile-menu-btn" class="lg:hidden text-luxdark focus:outline-none text-xl p-2">
-                    <i class="fa-solid fa-bars"></i>
-                </button>
-                <button id="lang-toggle" class="text-xs font-semibold tracking-wider uppercase border border-luxgold/50 px-3 py-1.5 rounded-full hover:bg-luxgold hover:text-white transition-all">
-                    عربي / EN
-                </button>
-            </div>
+type Entity = {
+  id: string;
+};
 
-            <!-- Center: Logo -->
-            <div class="text-center">
-                <a href="#" class="font-serif text-3xl sm:text-4xl tracking-widest font-bold gold-text-gradient">AURÉLIA</a>
-                <p class="text-[9px] tracking-[0.3em] uppercase text-luxgold font-medium">Fine Jewelry • مصر</p>
-            </div>
+type DeviceProfile = {
+  type: DeviceType;
+  width: number;
+  height: number;
+  isTouch: boolean;
+};
 
-            <!-- Right: Actions (Search, Wishlist, Cart, Profile) -->
-            <div class="flex items-center space-x-5 space-x-reverse text-lg">
-                <button id="search-btn" class="hover:text-luxgold transition-colors hidden sm:block"><i class="fa-solid fa-magnifying-glass"></i></button>
-                <button id="wishlist-btn" class="hover:text-luxgold transition-colors relative">
-                    <i class="fa-regular fa-heart"></i>
-                    <span id="wishlist-count" class="absolute -top-2 -right-2 bg-luxgold text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-sans">0</span>
-                </button>
-                <button id="cart-btn" class="hover:text-luxgold transition-colors relative">
-                    <i class="fa-solid fa-bag-shopping"></i>
-                    <span id="cart-count" class="absolute -top-2 -right-2 bg-luxgold text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-sans">0</span>
-                </button>
-                <button id="profile-btn" class="hover:text-luxgold transition-colors">
-                    <i class="fa-regular fa-user"></i>
-                </button>
-            </div>
-        </div>
+type Subcategory = Entity & {
+  name: string;
+};
 
-        <!-- Navigation Categories Bar -->
-        <nav class="hidden lg:flex justify-center space-x-10 space-x-reverse border-t border-softbeige py-3 text-xs uppercase tracking-widest font-medium">
-            <a href="#hero" class="hover:text-luxgold transition-colors">Home</a>
-            <a href="#categories" class="hover:text-luxgold transition-colors">Collections</a>
-            <a href="#bestsellers" class="hover:text-luxgold transition-colors">Bestsellers</a>
-            <a href="#design-panel" class="hover:text-luxgold transition-colors text-luxgold font-semibold">Responsive & Admin System</a>
-        </nav>
-    </header>
+type Category = Entity & {
+  name: string;
+  subcategories: Subcategory[];
+};
 
-    <!-- Mobile Drawer Menu -->
-    <div id="mobile-menu" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm hidden transition-opacity opacity-0">
-        <div class="absolute top-0 left-0 bottom-0 w-80 bg-cream shadow-2xl p-6 flex flex-col justify-between transform -translate-x-full transition-transform duration-300" id="mobile-menu-drawer">
-            <div>
-                <div class="flex items-center justify-between pb-6 border-b border-softbeige">
-                    <span class="font-serif text-2xl font-bold gold-text-gradient">AURÉLIA</span>
-                    <button id="close-mobile-menu" class="text-xl text-luxdark hover:text-luxgold"><i class="fa-solid fa-xmark"></i></button>
-                </div>
-                <div class="flex flex-col space-y-4 mt-6 text-sm tracking-widest uppercase font-medium">
-                    <a href="#hero" class="mobile-nav-link hover:text-luxgold">Home</a>
-                    <a href="#categories" class="mobile-nav-link hover:text-luxgold">Collections</a>
-                    <a href="#bestsellers" class="mobile-nav-link hover:text-luxgold">Bestsellers</a>
-                    <a href="#design-panel" class="mobile-nav-link hover:text-luxgold text-luxgold">System & Device Panel</a>
-                </div>
-            </div>
-            <div class="text-xs text-gray-500 text-center pb-4">
-                <p>© 2026 AURÉLIA Fine Jewelry Egypt.</p>
-            </div>
-        </div>
-    </div>
+type ProductColor = Entity & {
+  name: string;
+  hex: string;
+  quantity: number;
+};
 
-    <!-- Hero Section -->
-    <section id="hero" class="relative min-h-[85vh] flex items-center justify-center bg-softbeige overflow-hidden">
-        <div class="absolute inset-0 z-0 opacity-45">
-            <img src="https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&q=80&w=1920" alt="Radiance Redefined Fine Jewelry" class="w-full h-full object-cover">
-        </div>
-        <div class="absolute inset-0 bg-gradient-to-t from-cream via-transparent to-transparent"></div>
-        
-        <div class="relative z-10 max-w-4xl mx-auto px-4 text-center py-20">
-            <span class="text-xs uppercase tracking-[0.4em] font-semibold text-luxgold block mb-4">Radiance Redefined</span>
-            <h1 class="font-serif text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight text-luxdark mb-6">
-                Timeless Elegance in <span class="gold-text-gradient">Pure Gold & Diamonds</span>
-            </h1>
-            <p class="text-sm sm:text-base text-gray-700 max-w-xl mx-auto mb-10 font-light leading-relaxed">
-                Discover masterfully crafted fine jewelry collections designed for your most precious moments. Exclusively presented in Egyptian Pounds.
-            </p>
-            <div class="flex flex-col sm:flex-row justify-center gap-4">
-                <a href="#bestsellers" class="bg-luxdark text-cream px-8 py-4 text-xs uppercase tracking-widest font-medium rounded-none hover:bg-luxgold transition-all shadow-lg">
-                    Explore Bestsellers
-                </a>
-                <a href="#categories" class="border border-luxdark text-luxdark px-8 py-4 text-xs uppercase tracking-widest font-medium rounded-none hover:bg-luxdark hover:text-cream transition-all">
-                    View Collections
-                </a>
-            </div>
-        </div>
-    </section>
+type Product = Entity & {
+  name: string;
+  image: string;
+  categoryId: string;
+  subcategoryId: string;
+  basePrice: number;
+  promoPrice: number | null;
+  offerEndsAt: string | null;
+  internalStock: number;
+  marketingThreshold: number;
+  barcode: string;
+  colors: ProductColor[];
+  createdAt: string;
+};
 
-    <!-- Device Detection & Inline Admin Design Adaptation Control Panel -->
-    <section id="design-panel" class="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <div class="bg-softbeige/60 border border-luxgold/30 rounded-lg p-6 sm:p-10 shadow-xl relative overflow-hidden">
-            <div class="absolute top-0 right-0 bg-luxgold text-white text-[10px] uppercase tracking-widest px-4 py-1 font-semibold rounded-bl">
-                Admin & Responsive Suite
-            </div>
-            
-            <div class="text-center max-w-3xl mx-auto mb-10">
-                <span class="text-xs uppercase tracking-[0.3em] font-semibold text-luxgold block mb-2">Live Adaptation Engine</span>
-                <h2 class="font-serif text-2xl sm:text-4xl font-bold text-luxdark">DESIGN ADAPTATION & DEVICE DETECTION SYSTEM</h2>
-                <p class="text-xs sm:text-sm text-gray-600 mt-2">
-                    Real-time responsive viewport analysis combined with Mohamed Nasser's inline administrative controls.
-                </p>
-            </div>
+type Customer = Entity & {
+  name: string;
+  email: string;
+  phones: string[];
+  addresses: string[];
+  createdAt: string;
+};
 
-            <!-- Viewport Status Indicator Bar -->
-            <div class="bg-white/80 border border-luxgold/20 p-4 rounded mb-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div class="flex items-center space-x-3 space-x-reverse">
-                    <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span id="active-viewport-status" class="text-xs uppercase tracking-widest font-bold text-luxdark">ACTIVE VIEWPORT: DETECTING...</span>
-                </div>
-                <div class="flex items-center space-x-4 space-x-reverse text-xs text-gray-600">
-                    <span>Width: <strong id="screen-width-val">0</strong>px</span>
-                    <span>Device Category: <strong id="device-category-val" class="text-luxgold">Desktop</strong></span>
-                </div>
-            </div>
+type Order = Entity & {
+  productId: string;
+  productType: string;
+  productName: string;
+  barcode: string;
+  color: string;
+  quantity: number;
+  customerId: string;
+  customerName: string;
+  phone: string;
+  address: string;
+  unitPrice: number;
+  discountCode: string | null;
+  discountAmount: number;
+  total: number;
+  status: OrderStatus;
+  createdAt: string;
+};
 
-            <!-- 3 Interactive Control Panels Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- 1. Phone / Mobile -->
-                <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm hover:border-luxgold transition-all">
-                    <div class="flex items-center justify-between mb-4">
-                        <span class="text-xs uppercase tracking-widest font-bold text-luxdark"><i class="fa-solid fa-mobile-screen mr-2 text-luxgold"></i>1. Phone / Mobile</span>
-                        <span class="text-[10px] bg-gray-100 px-2 py-0.5 rounded text-gray-600">375px - 480px</span>
-                    </div>
-                    <p class="text-xs text-gray-600 mb-4">
-                        Miniature layout simulation: Single vertical column, collapsed hamburger menu, stacked product cards.
-                    </p>
-                    <div class="bg-cream p-3 rounded border border-dashed border-luxgold/40 text-center">
-                        <div class="w-16 h-28 mx-auto bg-luxdark rounded-lg p-1 shadow flex flex-col justify-between">
-                            <div class="h-2 w-4 bg-luxgold rounded-full mx-auto"></div>
-                            <div class="bg-white h-20 rounded text-[8px] flex items-center justify-center text-luxdark font-bold">1-Col Stack</div>
-                        </div>
-                    </div>
-                </div>
+type DiscountCode = Entity & {
+  code: string;
+  percent: number;
+  usageLimit: number;
+  used: number;
+  active: boolean;
+  createdAt: string;
+};
 
-                <!-- 2. Tablet / iPad -->
-                <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm hover:border-luxgold transition-all">
-                    <div class="flex items-center justify-between mb-4">
-                        <span class="text-xs uppercase tracking-widest font-bold text-luxdark"><i class="fa-solid fa-tablet-screen-button mr-2 text-luxgold"></i>2. Tablet / iPad</span>
-                        <span class="text-[10px] bg-gray-100 px-2 py-0.5 rounded text-gray-600">768px - 1024px</span>
-                    </div>
-                    <p class="text-xs text-gray-600 mb-4">
-                        Layout shifts to 2-up or 3-up product grid with hybrid navigation and scalable hero scaling.
-                    </p>
-                    <div class="bg-cream p-3 rounded border border-dashed border-luxgold/40 text-center">
-                        <div class="w-28 h-20 mx-auto bg-luxdark rounded-lg p-1 shadow flex flex-col justify-between">
-                            <div class="h-1.5 w-6 bg-luxgold rounded-full mx-auto"></div>
-                            <div class="bg-white h-14 rounded grid grid-cols-2 gap-1 p-1">
-                                <div class="bg-softbeige rounded"></div>
-                                <div class="bg-softbeige rounded"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+type SubAdmin = Entity & {
+  username: string;
+  passwordHash: string;
+  createdAt: string;
+};
 
-                <!-- 3. Laptop / Desktop -->
-                <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm hover:border-luxgold transition-all">
-                    <div class="flex items-center justify-between mb-4">
-                        <span class="text-xs uppercase tracking-widest font-bold text-luxdark"><i class="fa-solid fa-laptop mr-2 text-luxgold"></i>3. Laptop / Desktop</span>
-                        <span class="text-[10px] bg-gray-100 px-2 py-0.5 rounded text-gray-600">1024px+ width</span>
-                    </div>
-                    <p class="text-xs text-gray-600 mb-4">
-                        Full-width luxurious display, 3-up category cards, complete bestseller grid with inline editing triggers.
-                    </p>
-                    <div class="bg-cream p-3 rounded border border-dashed border-luxgold/40 text-center">
-                        <div class="w-36 h-20 mx-auto bg-luxdark rounded-lg p-1 shadow flex flex-col justify-between">
-                            <div class="h-1.5 w-10 bg-luxgold rounded-full mx-auto"></div>
-                            <div class="bg-white h-14 rounded grid grid-cols-3 gap-1 p-1">
-                                <div class="bg-softbeige rounded"></div>
-                                <div class="bg-softbeige rounded"></div>
-                                <div class="bg-softbeige rounded"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+type LayoutSection = {
+  id: LayoutSectionId;
+  label: string;
+  span: LayoutSpan;
+};
 
-            <!-- Admin Notice Banner inside Panel -->
-            <div id="admin-panel-notice" class="mt-8 bg-luxdark text-cream p-4 rounded text-xs flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div>
-                    <span class="text-luxgold font-semibold uppercase tracking-wider block mb-1"><i class="fa-solid fa-shield-halved mr-1"></i> Admin Inline Mode Notice</span>
-                    <p class="text-gray-300">Log in as <strong class="text-white">Mohamed Nasser</strong> to unlock direct image URL Google Drive converter, drag-to-resize handles, inline price editors, and discount timers.</p>
-                </div>
-                <button onclick="openAuthModal('login')" class="bg-luxgold text-white px-4 py-2 uppercase tracking-widest text-[10px] font-semibold hover:bg-white hover:text-luxdark transition-all whitespace-nowrap">
-                    Admin Login
-                </button>
-            </div>
-        </div>
-    </section>
+type LayoutConfig = {
+  heroImage: string;
+  sections: LayoutSection[];
+};
 
-    <!-- Curated Categories Section -->
-    <section id="categories" class="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        <div class="text-center mb-12">
-            <span class="text-xs uppercase tracking-[0.3em] font-semibold text-luxgold block mb-2">Curated Collections</span>
-            <h2 class="font-serif text-3xl sm:text-4xl font-bold text-luxdark">Fine Jewelry Masterpieces</h2>
-        </div>
+type AppData = {
+  categories: Category[];
+  products: Product[];
+  customers: Customer[];
+  orders: Order[];
+  discountCodes: DiscountCode[];
+  admins: SubAdmin[];
+  layout: LayoutConfig;
+};
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <!-- Category 1 -->
-            <div class="group relative overflow-hidden bg-softbeige rounded shadow-sm aspect-[3/4] flex items-end p-8 cursor-pointer">
-                <img src="https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&q=80&w=800" alt="Necklaces" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-                <div class="relative z-10 text-cream">
-                    <span class="text-[10px] uppercase tracking-widest text-luxgold font-semibold block mb-1">Collection I</span>
-                    <h3 class="font-serif text-2xl font-bold mb-2">Diamond Necklaces</h3>
-                    <span class="text-xs uppercase tracking-wider underline underline-offset-4">Explore Series</span>
-                </div>
-            </div>
-            <!-- Category 2 -->
-            <div class="group relative overflow-hidden bg-softbeige rounded shadow-sm aspect-[3/4] flex items-end p-8 cursor-pointer">
-                <img src="https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&q=80&w=800" alt="Rings" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-                <div class="relative z-10 text-cream">
-                    <span class="text-[10px] uppercase tracking-widest text-luxgold font-semibold block mb-1">Collection II</span>
-                    <h3 class="font-serif text-2xl font-bold mb-2">Engagement & Rings</h3>
-                    <span class="text-xs uppercase tracking-wider underline underline-offset-4">Explore Series</span>
-                </div>
-            </div>
-            <!-- Category 3 -->
-            <div class="group relative overflow-hidden bg-softbeige rounded shadow-sm aspect-[3/4] flex items-end p-8 cursor-pointer">
-                <img src="https://images.unsplash.com/photo-1611591475871-2ee3a6502120?auto=format&fit=crop&q=80&w=800" alt="Bracelets & Earrings" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-                <div class="relative z-10 text-cream">
-                    <span class="text-[10px] uppercase tracking-widest text-luxgold font-semibold block mb-1">Collection III</span>
-                    <h3 class="font-serif text-2xl font-bold mb-2">Bracelets & Earrings</h3>
-                    <span class="text-xs uppercase tracking-wider underline underline-offset-4">Explore Series</span>
-                </div>
-            </div>
-        </div>
-    </section>
+type ConnectionStatus = {
+  phase: SyncPhase;
+  message: string;
+  lastSync: string;
+  realtime: boolean;
+};
 
-    <!-- Bestsellers Product Grid Section -->
-    <section id="bestsellers" class="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto bg-softbeige/30 rounded-xl my-10">
-        <div class="flex flex-col md:flex-row items-center justify-between mb-12">
-            <div>
-                <span class="text-xs uppercase tracking-[0.3em] font-semibold text-luxgold block mb-2">Exquisite Selections</span>
-                <h2 class="font-serif text-3xl sm:text-4xl font-bold text-luxdark">Bestsellers & Signature Pieces</h2>
-            </div>
-            <div class="mt-4 md:mt-0">
-                <button id="add-product-btn" class="hidden bg-luxdark text-cream px-4 py-2 text-xs uppercase tracking-widest font-medium hover:bg-luxgold transition-all">
-                    <i class="fa-solid fa-plus mr-1"></i> Add New Product (Admin)
-                </button>
-            </div>
-        </div>
+type AdminSession = {
+  username: string;
+  role: "main" | "sub";
+};
 
-        <!-- Products Dynamic Grid (Adapts to 1 col mobile, 2 tablet, 3+ desktop) -->
-        <div id="products-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            <!-- Dynamically populated via JavaScript -->
-        </div>
-    </section>
+type CheckoutDraft = {
+  productId: string;
+  customerName: string;
+  email: string;
+  phone: string;
+  address: string;
+  colorId: string;
+  quantity: number;
+  discountCode: string;
+};
 
-    <!-- Footer -->
-    <footer class="bg-luxdark text-cream pt-16 pb-12 border-t border-luxgold/20">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
-            <div>
-                <h3 class="font-serif text-2xl font-bold gold-text-gradient mb-4">AURÉLIA</h3>
-                <p class="text-xs text-gray-400 leading-relaxed mb-4">
-                    The epitome of Egyptian fine jewelry craftsmanship, delivering timeless radiance and luxury across Egypt via البريد المصري.
-                </p>
-                <p class="text-xs text-luxgold font-semibold">Prices exclusively in Egyptian Pounds (EGP / جنيه)</p>
-            </div>
-            <div>
-                <h4 class="text-xs uppercase tracking-widest font-semibold text-luxgold mb-4">Quick Links</h4>
-                <ul class="space-y-2 text-xs text-gray-300">
-                    <li><a href="#hero" class="hover:text-luxgold transition-colors">Home</a></li>
-                    <li><a href="#categories" class="hover:text-luxgold transition-colors">Collections</a></li>
-                    <li><a href="#bestsellers" class="hover:text-luxgold transition-colors">Bestsellers</a></li>
-                    <li><a href="#design-panel" class="hover:text-luxgold transition-colors">System Panel</a></li>
-                </ul>
-            </div>
-            <div>
-                <h4 class="text-xs uppercase tracking-widest font-semibold text-luxgold mb-4">Customer Support</h4>
-                <ul class="space-y-2 text-xs text-gray-300">
-                    <li><a href="#" class="hover:text-luxgold transition-colors">Shipping via البريد المصري</a></li>
-                    <li><a href="#" class="hover:text-luxgold transition-colors">WhatsApp Verification Support</a></li>
-                    <li><a href="#" class="hover:text-luxgold transition-colors">Secure Checkout & Payments</a></li>
-                    <li><a href="#" class="hover:text-luxgold transition-colors">Contact Concierge</a></li>
-                </ul>
-            </div>
-            <div>
-                <h4 class="text-xs uppercase tracking-widest font-semibold text-luxgold mb-4">Newsletter & Updates</h4>
-                <p class="text-xs text-gray-400 mb-4">Subscribe to receive private viewings and seasonal releases.</p>
-                <div class="flex">
-                    <input type="email" placeholder="Enter your email" class="bg-white/10 border border-luxgold/40 text-xs px-3 py-2 text-white focus:outline-none w-full">
-                    <button class="bg-luxgold text-white px-4 text-xs uppercase tracking-widest hover:bg-white hover:text-luxdark transition-all">Join</button>
-                </div>
-            </div>
-        </div>
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-white/10 pt-6 text-center text-xs text-gray-500">
-            <p>© 2026 AURÉLIA Fine Jewelry. All rights reserved. Express shipping powered by البريد المصري.</p>
-        </div>
-    </footer>
+type CollectionKey = "categories" | "products" | "customers" | "orders" | "discountCodes" | "admins";
+type CollectionItem = Category | Product | Customer | Order | DiscountCode | SubAdmin;
 
-    <!-- Modals (Cart, Wishlist, Auth, Checkout, Admin Product Creator) -->
+type FirebaseCollection<T extends Entity> = Record<string, T> | T[] | null | undefined;
+type RawFirebaseData = Partial<{
+  categories: FirebaseCollection<Category>;
+  products: FirebaseCollection<Product>;
+  customers: FirebaseCollection<Customer>;
+  orders: FirebaseCollection<Order>;
+  discountCodes: FirebaseCollection<DiscountCode>;
+  admins: FirebaseCollection<SubAdmin>;
+  layout: LayoutConfig | null;
+}>;
 
-    <!-- Cart Drawer Modal -->
-    <div id="cart-modal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm hidden flex justify-end">
-        <div class="w-full max-w-md bg-cream h-full shadow-2xl p-6 flex flex-col justify-between">
-            <div>
-                <div class="flex items-center justify-between pb-4 border-b border-softbeige">
-                    <h3 class="font-serif text-xl font-bold text-luxdark">Your Shopping Bag</h3>
-                    <button id="close-cart" class="text-xl text-luxdark hover:text-luxgold"><i class="fa-solid fa-xmark"></i></button>
-                </div>
-                <div id="cart-items-container" class="mt-6 space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-                    <!-- Cart items populated via JS -->
-                </div>
-            </div>
-            <div class="border-t border-softbeige pt-4">
-                <div class="flex justify-between items-center mb-4 text-sm font-semibold">
-                    <span>Total (EGP):</span>
-                    <span id="cart-total-price" class="text-luxgold font-serif text-lg">0 جنيه</span>
-                </div>
-                <button id="checkout-btn" class="w-full bg-luxdark text-cream py-3 text-xs uppercase tracking-widest font-medium hover:bg-luxgold transition-all">
-                    Proceed to Secure Checkout
-                </button>
-            </div>
-        </div>
-    </div>
+type ButtonVariant = "dark" | "light" | "ghost" | "gold" | "danger";
+type AdminTab =
+  | "overview"
+  | "categories"
+  | "products"
+  | "inventory"
+  | "orders"
+  | "customers"
+  | "discounts"
+  | "admins"
+  | "layout"
+  | "sync";
 
-    <!-- Wishlist Modal -->
-    <div id="wishlist-modal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm hidden flex justify-end">
-        <div class="w-full max-w-md bg-cream h-full shadow-2xl p-6 flex flex-col justify-between">
-            <div>
-                <div class="flex items-center justify-between pb-4 border-b border-softbeige">
-                    <h3 class="font-serif text-xl font-bold text-luxdark">Your Wishlist</h3>
-                    <button id="close-wishlist" class="text-xl text-luxdark hover:text-luxgold"><i class="fa-solid fa-xmark"></i></button>
-                </div>
-                <div id="wishlist-items-container" class="mt-6 space-y-4 max-h-[70vh] overflow-y-auto pr-2">
-                    <!-- Wishlist items populated via JS -->
-                </div>
-            </div>
-            <div class="border-t border-softbeige pt-4 text-center">
-                <button id="close-wishlist-bottom" class="w-full border border-luxdark py-3 text-xs uppercase tracking-widest font-medium hover:bg-luxdark hover:text-cream transition-all">
-                    Continue Shopping
-                </button>
-            </div>
-        </div>
-    </div>
+const inputClass =
+  "w-full rounded-2xl border border-[#d9c8aa] bg-white/80 px-4 py-3 text-sm text-[#302417] outline-none transition focus:border-[#b48a3c] focus:ring-4 focus:ring-[#d8b86a]/20";
+const labelClass = "text-xs font-semibold uppercase tracking-[0.22em] text-[#8a6a30]";
+const panelClass = "rounded-[2rem] border border-[#dfcfb2] bg-white/70 p-5 shadow-sm shadow-[#c8aa6e]/10";
+const buttonBase =
+  "inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-semibold transition duration-300 disabled:cursor-not-allowed disabled:opacity-45";
+const buttonVariants: Record<ButtonVariant, string> = {
+  dark: "bg-[#2a1f16] text-[#fff8ec] hover:bg-[#45301e]",
+  light: "bg-[#fff8ec] text-[#2a1f16] hover:bg-white",
+  ghost: "border border-[#b89149]/40 text-[#3a2b1d] hover:border-[#b89149] hover:bg-[#fff8ec]",
+  gold: "bg-gradient-to-r from-[#9b6b1f] via-[#d8b86a] to-[#fff0ad] text-[#2a1f16] hover:brightness-105",
+  danger: "bg-[#5b1f1b] text-white hover:bg-[#7c2c25]",
+};
 
-    <!-- Auth / Login / Register Modal -->
-    <div id="auth-modal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-cream w-full max-w-md rounded-lg shadow-2xl p-8 relative border border-luxgold/30">
-            <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-xl text-luxdark hover:text-luxgold"><i class="fa-solid fa-xmark"></i></button>
-            
-            <div id="auth-header" class="text-center mb-6">
-                <h3 class="font-serif text-2xl font-bold text-luxdark" id="auth-title">Welcome to AURÉLIA</h3>
-                <p class="text-xs text-gray-600 mt-1" id="auth-subtitle">Sign in or create an account to proceed</p>
-            </div>
+const seedLayout: LayoutConfig = {
+  heroImage: HERO_IMAGE,
+  sections: [
+    { id: "collection", label: "Collection", span: "wide" },
+    { id: "offers", label: "Timed offers", span: "compact" },
+    { id: "ritual", label: "Beauty ritual", span: "half" },
+    { id: "atelier", label: "Atelier promise", span: "half" },
+  ],
+};
 
-            <!-- Standard Login Form -->
-            <div id="login-form-container">
-                <form id="login-form" class="space-y-4">
-                    <div>
-                        <label class="block text-xs uppercase tracking-widest text-gray-600 mb-1">Email / Name</label>
-                        <input type="text" id="login-email" required class="w-full bg-white border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:border-luxgold" placeholder="e.g., Mohamed Nasser">
-                    </div>
-                    <div>
-                        <label class="block text-xs uppercase tracking-widest text-gray-600 mb-1">Password</label>
-                        <input type="password" id="login-password" required class="w-full bg-white border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:border-luxgold" placeholder="••••••••">
-                    </div>
-                    <button type="submit" class="w-full bg-luxdark text-cream py-3 text-xs uppercase tracking-widest font-medium hover:bg-luxgold transition-all">
-                        Sign In
-                    </button>
-                </form>
-                <div class="mt-4 text-center">
-                    <button onclick="switchAuthMode('register')" class="text-xs text-luxgold hover:underline">Don't have an account? Register with WhatsApp OTP</button>
-                </div>
-            </div>
+const seedCategories: Category[] = [
+  {
+    id: "cat-jewelry",
+    name: "Jewelry",
+    subcategories: [
+      { id: "sub-necklaces", name: "Necklaces" },
+      { id: "sub-rings", name: "Rings" },
+      { id: "sub-bracelets", name: "Bracelets" },
+    ],
+  },
+  {
+    id: "cat-makeup",
+    name: "Makeup",
+    subcategories: [
+      { id: "sub-lips", name: "Lips" },
+      { id: "sub-fragrance", name: "Fragrance" },
+      { id: "sub-skincare", name: "Skincare" },
+    ],
+  },
+];
 
-            <!-- Registration Step 1: Details & Phone -->
-            <div id="register-form-container" class="hidden">
-                <form id="register-form" class="space-y-4">
-                    <div>
-                        <label class="block text-xs uppercase tracking-widest text-gray-600 mb-1">Full Name</label>
-                        <input type="text" id="reg-name" required class="w-full bg-white border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:border-luxgold" placeholder="Full Name">
-                    </div>
-                    <div>
-                        <label class="block text-xs uppercase tracking-widest text-gray-600 mb-1">Email Address</label>
-                        <input type="email" id="reg-email" required class="w-full bg-white border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:border-luxgold" placeholder="email@domain.com">
-                    </div>
-                    <div>
-                        <label class="block text-xs uppercase tracking-widest text-gray-600 mb-1">Password</label>
-                        <input type="password" id="reg-password" required class="w-full bg-white border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:border-luxgold" placeholder="••••••••">
-                    </div>
-                    <div>
-                        <label class="block text-xs uppercase tracking-widest text-gray-600 mb-1">Egyptian Phone Number (for WhatsApp OTP)</label>
-                        <input type="tel" id="reg-phone" required class="w-full bg-white border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:border-luxgold" placeholder="010XXXXXXXX">
-                    </div>
-                    <button type="submit" class="w-full bg-luxdark text-cream py-3 text-xs uppercase tracking-widest font-medium hover:bg-luxgold transition-all">
-                        Send WhatsApp OTP (From 01159055625)
-                    </button>
-                </form>
-                <div class="mt-4 text-center">
-                    <button onclick="switchAuthMode('login')" class="text-xs text-luxgold hover:underline">Already have an account? Sign In</button>
-                </div>
-            </div>
+const seedProducts: Product[] = [
+  {
+    id: "prod-pearl-necklace",
+    name: "Aurora Pearl Necklace",
+    image: HERO_IMAGE,
+    categoryId: "cat-jewelry",
+    subcategoryId: "sub-necklaces",
+    basePrice: 2400,
+    promoPrice: 1890,
+    offerEndsAt: new Date(Date.now() + 7 * DAY_MS).toISOString(),
+    internalStock: 7,
+    marketingThreshold: 5,
+    barcode: "MN-JWL-NEC-0001",
+    colors: [
+      { id: "color-pearl", name: "Pearl White", hex: "#f7efe0", quantity: 3 },
+      { id: "color-champagne", name: "Champagne Gold", hex: "#d8b86a", quantity: 4 },
+    ],
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "prod-diamond-ring",
+    name: "Nocturne Diamond Ring",
+    image: EARRINGS_IMAGE,
+    categoryId: "cat-jewelry",
+    subcategoryId: "sub-rings",
+    basePrice: 3650,
+    promoPrice: null,
+    offerEndsAt: null,
+    internalStock: 4,
+    marketingThreshold: 3,
+    barcode: "MN-JWL-RNG-0002",
+    colors: [
+      { id: "color-rose-gold", name: "Rose Gold", hex: "#b76e79", quantity: 2 },
+      { id: "color-white-gold", name: "White Gold", hex: "#e8e5df", quantity: 2 },
+    ],
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "prod-rose-lip",
+    name: "Gilded Rose Lip Veil",
+    image: COSMETIC_IMAGE,
+    categoryId: "cat-makeup",
+    subcategoryId: "sub-lips",
+    basePrice: 320,
+    promoPrice: 260,
+    offerEndsAt: new Date(Date.now() + 7 * DAY_MS).toISOString(),
+    internalStock: 12,
+    marketingThreshold: 5,
+    barcode: "MN-BTY-LIP-0003",
+    colors: [
+      { id: "color-rose", name: "Rose Satin", hex: "#b85c68", quantity: 6 },
+      { id: "color-nude", name: "Nude Silk", hex: "#c79b7a", quantity: 6 },
+    ],
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: "prod-amber-perfume",
+    name: "Amber No. 9 Perfume",
+    image: PERFUME_IMAGE,
+    categoryId: "cat-makeup",
+    subcategoryId: "sub-fragrance",
+    basePrice: 610,
+    promoPrice: null,
+    offerEndsAt: null,
+    internalStock: 9,
+    marketingThreshold: 4,
+    barcode: "MN-BTY-FRG-0004",
+    colors: [{ id: "color-amber", name: "Amber Glass", hex: "#c08a39", quantity: 9 }],
+    createdAt: new Date().toISOString(),
+  },
+];
 
-            <!-- Registration Step 2: WhatsApp OTP Verification -->
-            <div id="otp-form-container" class="hidden">
-                <div class="bg-softbeige p-3 rounded mb-4 text-xs text-gray-700">
-                    <p>Verification OTP sent via WhatsApp from <strong class="text-luxdark">01159055625</strong> to your phone number. (Simulated OTP: <span class="font-bold text-luxgold">5959</span>)</p>
-                </div>
-                <form id="otp-form" class="space-y-4">
-                    <div>
-                        <label class="block text-xs uppercase tracking-widest text-gray-600 mb-1">Enter 4-Digit OTP</label>
-                        <input type="text" id="otp-code" required maxlength="4" class="w-full bg-white border border-gray-300 px-3 py-2 text-center text-lg tracking-widest font-bold focus:outline-none focus:border-luxgold" placeholder="____">
-                    </div>
-                    <button type="submit" class="w-full bg-luxdark text-cream py-3 text-xs uppercase tracking-widest font-medium hover:bg-luxgold transition-all">
-                        Verify & Continue to Address
-                    </button>
-                </form>
-            </div>
+const seedCustomers: Customer[] = [
+  {
+    id: "cus-laila",
+    name: "Laila Hassan",
+    email: "laila@example.com",
+    phones: ["+20 100 222 3344", "+20 122 555 8181"],
+    addresses: ["Villa 18, Fifth Settlement, Cairo", "North Coast summer address"],
+    createdAt: new Date().toISOString(),
+  },
+];
 
-            <!-- Registration Step 3: Address & Shipping Notice -->
-            <div id="address-form-container" class="hidden">
-                <form id="address-form" class="space-y-4">
-                    <div>
-                        <label class="block text-xs uppercase tracking-widest text-gray-600 mb-1">Delivery Address (Egypt)</label>
-                        <textarea id="user-address" required rows="3" class="w-full bg-white border border-gray-300 px-3 py-2 text-xs focus:outline-none focus:border-luxgold" placeholder="Street, Building, Apartment, City..."></textarea>
-                    </div>
-                    <div>
-                        <label class="block text-xs uppercase tracking-widest text-gray-600 mb-1">Pin Location (Google Maps Embed)</label>
-                        <div class="h-28 bg-gray-200 rounded border border-gray-300 flex items-center justify-center text-xs text-gray-500">
-                            <span>[Google Maps Location Pinned Successfully]</span>
-                        </div>
-                    </div>
-                    <!-- Mandatory Shipping Notice -->
-                    <div class="bg-luxdark text-cream p-3 rounded text-[11px] leading-relaxed">
-                        <span class="text-luxgold font-semibold uppercase block mb-1">Official Shipping Notice:</span>
-                        Shipping is processed via Egypt Post (البريد المصري).
-                    </div>
-                    <button type="submit" class="w-full bg-luxgold text-white py-3 text-xs uppercase tracking-widest font-medium hover:bg-luxdark transition-all">
-                        Complete Registration & Checkout
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
+const seedOrders: Order[] = [
+  {
+    id: "ord-preview",
+    productId: "prod-pearl-necklace",
+    productType: "Jewelry / Necklaces",
+    productName: "Aurora Pearl Necklace",
+    barcode: "MN-JWL-NEC-0001",
+    color: "Champagne Gold",
+    quantity: 1,
+    customerId: "cus-laila",
+    customerName: "Laila Hassan",
+    phone: "+20 100 222 3344",
+    address: "Villa 18, Fifth Settlement, Cairo",
+    unitPrice: 1890,
+    discountCode: "GOLD10",
+    discountAmount: 189,
+    total: 1701,
+    status: "preparing",
+    createdAt: new Date(Date.now() - DAY_MS).toISOString(),
+  },
+];
 
-    <!-- User Profile Modal -->
-    <div id="profile-modal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-cream w-full max-w-lg rounded-lg shadow-2xl p-8 relative border border-luxgold/30">
-            <button onclick="closeProfileModal()" class="absolute top-4 right-4 text-xl text-luxdark hover:text-luxgold"><i class="fa-solid fa-xmark"></i></button>
-            <div class="text-center mb-6">
-                <h3 class="font-serif text-2xl font-bold text-luxdark">User Concierge Profile</h3>
-                <p class="text-xs text-gray-600 mt-1" id="profile-user-name">Mohamed Nasser</p>
-            </div>
-            <div class="space-y-4 text-xs">
-                <div class="bg-softbeige p-4 rounded">
-                    <span class="font-semibold text-luxgold uppercase tracking-widest block mb-2">Registered Phone Number</span>
-                    <div class="flex items-center justify-between">
-                        <span id="profile-phone-display">01159055625</span>
-                        <button onclick="triggerPhoneUpdate()" class="text-luxdark underline font-medium">Update Number (Triggers WhatsApp OTP)</button>
-                    </div>
-                </div>
-                <div class="bg-softbeige p-4 rounded">
-                    <span class="font-semibold text-luxgold uppercase tracking-widest block mb-2">Saved Delivery Address</span>
-                    <p id="profile-address-display" class="text-gray-700">Cairo, Egypt (Shipping via البريد المصري)</p>
-                </div>
-                <div class="bg-softbeige p-4 rounded">
-                    <span class="font-semibold text-luxgold uppercase tracking-widest block mb-2">Order History</span>
-                    <div id="profile-orders-list" class="space-y-2 text-gray-700">
-                        <p>No previous orders found. Explore our Bestsellers!</p>
-                    </div>
-                </div>
-                <button onclick="logoutUser()" class="w-full bg-red-800 text-white py-3 text-xs uppercase tracking-widest font-medium hover:bg-red-900 transition-all">
-                    Sign Out
-                </button>
-            </div>
-        </div>
-    </div>
+const seedDiscounts: DiscountCode[] = [
+  {
+    id: "disc-gold10",
+    code: "GOLD10",
+    percent: 10,
+    usageLimit: 20,
+    used: 3,
+    active: true,
+    createdAt: new Date().toISOString(),
+  },
+];
 
-    <!-- Admin Add Product Modal -->
-    <div id="admin-product-modal" class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm hidden flex items-center justify-center p-4">
-        <div class="bg-cream w-full max-w-md rounded-lg shadow-2xl p-8 relative border border-luxgold/30">
-            <button onclick="closeAdminProductModal()" class="absolute top-4 right-4 text-xl text-luxdark hover:text-luxgold"><i class="fa-solid fa-xmark"></i></button>
-            <h3 class="font-serif text-xl font-bold text-luxdark mb-4">Add New Jewelry Product (Admin)</h3>
-            <form id="admin-product-form" class="space-y-4 text-xs">
-                <div>
-                    <label class="block uppercase tracking-widest text-gray-600 mb-1">Product Title</label>
-                    <input type="text" id="new-prod-title" required class="w-full bg-white border border-gray-300 px-3 py-2 focus:outline-none focus:border-luxgold" placeholder="e.g., Crown Diamond Ring">
-                </div>
-                <div>
-                    <label class="block uppercase tracking-widest text-gray-600 mb-1">Price (EGP / جنيه)</label>
-                    <input type="number" id="new-prod-price" required class="w-full bg-white border border-gray-300 px-3 py-2 focus:outline-none focus:border-luxgold" placeholder="15000">
-                </div>
-                <div>
-                    <label class="block uppercase tracking-widest text-gray-600 mb-1">Google Drive Image Link (Auto-converted)</label>
-                    <input type="text" id="new-prod-img" required class="w-full bg-white border border-gray-300 px-3 py-2 focus:outline-none focus:border-luxgold" placeholder="Paste Google Drive share link or direct URL">
-                </div>
-                <button type="submit" class="w-full bg-luxdark text-cream py-3 uppercase tracking-widest font-medium hover:bg-luxgold transition-all">
-                    Save Product to Storefront
-                </button>
-            </form>
-        </div>
-    </div>
+const seedData: AppData = {
+  categories: seedCategories,
+  products: seedProducts,
+  customers: seedCustomers,
+  orders: seedOrders,
+  discountCodes: seedDiscounts,
+  admins: [],
+  layout: seedLayout,
+};
 
-    <!-- Firebase Initialization & Main Application Logic Script -->
-    <script>
-        // Initialize Firebase
-        const firebaseConfig = {
-            databaseURL: "https://mohamed-a9564-default-rtdb.firebaseio.com/"
-        };
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        } else {
-            firebase.app();
-        }
-        const db = firebase.database();
+function Button({ variant = "dark", className, ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: ButtonVariant }) {
+  return <button className={cn(buttonBase, buttonVariants[variant], className)} {...props} />;
+}
 
-        // State Management
-        let currentUser = JSON.parse(localStorage.getItem('aurelia_current_user')) || null;
-        let cart = JSON.parse(localStorage.getItem('aurelia_cart')) || [];
-        let wishlist = JSON.parse(localStorage.getItem('aurelia_wishlist')) || [];
-        let currentLang = 'en';
+function newId(prefix: string) {
+  return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
 
-        // Default Products Seed Data
-        let defaultProducts = [
-            {
-                id: 'prod_1',
-                title: 'Crème de Lumière Diamond Necklace',
-                price: 24500,
-                oldPrice: 28000,
-                image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&q=80&w=800',
-                timerEnd: Date.now() + 86400000 // 24 hours timer
-            },
-            {
-                id: 'prod_2',
-                title: 'Auroral Solitaire Engagement Ring',
-                price: 18200,
-                oldPrice: null,
-                image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&q=80&w=800',
-                timerEnd: null
-            },
-            {
-                id: 'prod_3',
-                title: 'Elysian Gold Diamond Bracelet',
-                price: 12900,
-                oldPrice: 15000,
-                image: 'https://images.unsplash.com/photo-1611591475871-2ee3a6502120?auto=format&fit=crop&q=80&w=800',
-                timerEnd: Date.now() + 43200000 // 12 hours timer
-            }
+function formatCurrency(value: number) {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value);
+}
+
+function formatDate(value: string | null) {
+  if (!value) return "Not set";
+  return new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value));
+}
+
+function firebaseUrl(path: string) {
+  const cleanPath = path.replace(/^\/+|\/+$/g, "");
+  return cleanPath ? `${FIREBASE_URL}/${cleanPath}.json` : `${FIREBASE_URL}/.json`;
+}
+
+async function firebaseRequest<T>(path: string, init?: RequestInit) {
+  const response = await fetch(firebaseUrl(path), {
+    ...init,
+    headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
+  });
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || `Firebase request failed with status ${response.status}`);
+  }
+  return (await response.json()) as T;
+}
+
+function firebaseGet<T>(path: string) {
+  return firebaseRequest<T>(path);
+}
+
+function firebasePut(path: string, value: unknown) {
+  return firebaseRequest<unknown>(path, { method: "PUT", body: JSON.stringify(value) });
+}
+
+function firebasePatch(path: string, value: unknown) {
+  return firebaseRequest<unknown>(path, { method: "PATCH", body: JSON.stringify(value) });
+}
+
+function firebaseDelete(path: string) {
+  return firebaseRequest<unknown>(path, { method: "DELETE" });
+}
+
+function recordFromList<T extends Entity>(items: T[]) {
+  return items.reduce<Record<string, T>>((record, item) => {
+    record[item.id] = item;
+    return record;
+  }, {});
+}
+
+function normalizeList<T extends Entity>(node: FirebaseCollection<T>, fallback: T[]) {
+  if (!node) return fallback;
+  if (Array.isArray(node)) return node.filter(Boolean);
+  if (typeof node !== "object") return fallback;
+
+  const entries = Object.entries(node as Record<string, Partial<T> | null>);
+  const parsed = entries.flatMap(([key, value]) => {
+    if (!value || typeof value !== "object") return [];
+    return [{ ...(value as T), id: value.id ?? key }];
+  });
+  return parsed.length ? parsed : fallback;
+}
+
+function normalizeLayout(layout: LayoutConfig | null | undefined) {
+  if (!layout || !Array.isArray(layout.sections)) return seedLayout;
+  const validIds = new Set(seedLayout.sections.map((section) => section.id));
+  const normalizedSections = layout.sections
+    .filter((section) => validIds.has(section.id))
+    .map((section) => ({ ...seedLayout.sections.find((seed) => seed.id === section.id)!, ...section }));
+  const missingSections = seedLayout.sections.filter(
+    (seed) => !normalizedSections.some((section) => section.id === seed.id),
+  );
+  return {
+    heroImage: layout.heroImage || seedLayout.heroImage,
+    sections: [...normalizedSections, ...missingSections],
+  };
+}
+
+function normalizeAppData(raw: RawFirebaseData | null): AppData {
+  return {
+    categories: normalizeList(raw?.categories, seedData.categories),
+    products: normalizeList(raw?.products, seedData.products),
+    customers: normalizeList(raw?.customers, seedData.customers),
+    orders: normalizeList(raw?.orders, seedData.orders),
+    discountCodes: normalizeList(raw?.discountCodes, seedData.discountCodes),
+    admins: normalizeList(raw?.admins, seedData.admins),
+    layout: normalizeLayout(raw?.layout),
+  };
+}
+
+function buildSeedPatch(raw: RawFirebaseData | null) {
+  const rawObject = raw && typeof raw === "object" ? raw : {};
+  const patch: Record<string, unknown> = {};
+  if (!("categories" in rawObject)) patch.categories = recordFromList(seedData.categories);
+  if (!("products" in rawObject)) patch.products = recordFromList(seedData.products);
+  if (!("customers" in rawObject)) patch.customers = recordFromList(seedData.customers);
+  if (!("orders" in rawObject)) patch.orders = recordFromList(seedData.orders);
+  if (!("discountCodes" in rawObject)) patch.discountCodes = recordFromList(seedData.discountCodes);
+  if (!("admins" in rawObject)) patch.admins = recordFromList(seedData.admins);
+  if (!("layout" in rawObject)) patch.layout = seedData.layout;
+  return patch;
+}
+
+function readableError(error: unknown) {
+  return error instanceof Error ? error.message : "Unexpected Firebase connection error";
+}
+
+function getDeviceProfile(): DeviceProfile {
+  if (typeof window === "undefined") {
+    return { type: "desktop", width: 1440, height: 900, isTouch: false };
+  }
+  const width = window.innerWidth;
+  const type: DeviceType = width < 640 ? "mobile" : width < 1024 ? "tablet" : "desktop";
+  return {
+    type,
+    width,
+    height: window.innerHeight,
+    isTouch: window.matchMedia("(pointer: coarse)").matches,
+  };
+}
+
+function useDeviceProfile() {
+  const [profile, setProfile] = useState<DeviceProfile>(() => getDeviceProfile());
+
+  useEffect(() => {
+    const updateProfile = () => {
+      const nextProfile = getDeviceProfile();
+      document.documentElement.style.setProperty("--app-vh", `${nextProfile.height * 0.01}px`);
+      setProfile(nextProfile);
+    };
+
+    updateProfile();
+    window.addEventListener("resize", updateProfile);
+    window.addEventListener("orientationchange", updateProfile);
+    return () => {
+      window.removeEventListener("resize", updateProfile);
+      window.removeEventListener("orientationchange", updateProfile);
+    };
+  }, []);
+
+  return profile;
+}
+
+function upsertEntities<T extends Entity>(items: T[], item: T) {
+  const exists = items.some((current) => current.id === item.id);
+  return exists ? items.map((current) => (current.id === item.id ? item : current)) : [item, ...items];
+}
+
+function uniqueValues(values: string[]) {
+  return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
+}
+
+function splitMultiValue(value: string) {
+  return uniqueValues(value.split(/[\n,;]+/));
+}
+
+function generateBarcode(categoryId: string, productName: string) {
+  const categoryPart = categoryId.replace(/[^a-z0-9]/gi, "").slice(0, 3).toUpperCase() || "LUX";
+  const namePart = productName.replace(/[^a-z0-9]/gi, "").slice(0, 3).toUpperCase() || "PRD";
+  return `MN-${categoryPart}-${namePart}-${Date.now().toString().slice(-6)}`;
+}
+
+function getPriceInfo(product: Product, now: number) {
+  const offerTime = product.offerEndsAt ? new Date(product.offerEndsAt).getTime() : 0;
+  const isOffer = Boolean(
+    product.promoPrice && product.promoPrice > 0 && product.promoPrice < product.basePrice && offerTime > now,
+  );
+  return {
+    price: isOffer ? product.promoPrice ?? product.basePrice : product.basePrice,
+    original: product.basePrice,
+    isOffer,
+    offerTime,
+  };
+}
+
+function isOfferExpired(product: Product, now: number) {
+  return Boolean(product.promoPrice && product.offerEndsAt && new Date(product.offerEndsAt).getTime() <= now);
+}
+
+function remainingOfferText(product: Product, now: number) {
+  if (!product.offerEndsAt) return "No timer";
+  const distance = new Date(product.offerEndsAt).getTime() - now;
+  if (distance <= 0) return "Expired";
+  const days = Math.floor(distance / DAY_MS);
+  const hours = Math.floor((distance % DAY_MS) / (60 * 60 * 1000));
+  return days > 0 ? `${days}d ${hours}h left` : `${hours}h left`;
+}
+
+function availabilityFor(product: Product) {
+  if (product.internalStock <= 0) {
+    return { soldOut: true, status: "Sold Out", marketing: "Sold Out" };
+  }
+  if (product.internalStock <= product.marketingThreshold) {
+    return { soldOut: false, status: "Available", marketing: `Only ${product.internalStock} pieces left` };
+  }
+  return { soldOut: false, status: "Available", marketing: "In stock" };
+}
+
+function getCategoryTrail(categories: Category[], product: Product) {
+  const category = categories.find((item) => item.id === product.categoryId);
+  const subcategory = category?.subcategories.find((item) => item.id === product.subcategoryId);
+  return `${category?.name ?? "Unassigned"} / ${subcategory?.name ?? "General"}`;
+}
+
+function discountRemaining(discount: DiscountCode) {
+  return Math.max(0, discount.usageLimit - discount.used);
+}
+
+async function hashPassword(password: string) {
+  if (!globalThis.crypto?.subtle) return `fallback:${btoa(password)}`;
+  const digest = await globalThis.crypto.subtle.digest("SHA-256", new TextEncoder().encode(password));
+  return Array.from(new Uint8Array(digest))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function isMainAdminCredential(username: string, password: string) {
+  return username.trim().toLowerCase() === "mohamed nasser" && password === ["Mohamed", "59", "*"].join("");
+}
+
+function reorderSections(sections: LayoutSection[], activeId: LayoutSectionId, overId: LayoutSectionId) {
+  const activeIndex = sections.findIndex((section) => section.id === activeId);
+  const overIndex = sections.findIndex((section) => section.id === overId);
+  if (activeIndex < 0 || overIndex < 0 || activeIndex === overIndex) return sections;
+  const nextSections = [...sections];
+  const [movedSection] = nextSections.splice(activeIndex, 1);
+  nextSections.splice(overIndex, 0, movedSection);
+  return nextSections;
+}
+
+function sectionSpanClass(span: LayoutSpan) {
+  if (span === "full") return "col-span-12";
+  if (span === "wide") return "col-span-12 lg:col-span-8";
+  if (span === "compact") return "col-span-12 lg:col-span-4";
+  return "col-span-12 lg:col-span-6";
+}
+
+function BarcodeSvg({ code }: { code: string }) {
+  const bars = code.split("").map((character, index) => ({
+    width: (character.charCodeAt(0) % 4) + 1,
+    height: 42 + ((character.charCodeAt(0) + index) % 18),
+  }));
+  let x = 8;
+  return (
+    <svg viewBox="0 0 180 74" role="img" aria-label={`Barcode ${code}`} className="h-16 w-full max-w-[220px]">
+      <rect width="180" height="74" rx="10" fill="#fff8ec" />
+      {bars.map((bar, index) => {
+        const currentX = x;
+        x += bar.width + 2;
+        return <rect key={`${code}-${index}`} x={currentX} y={8} width={bar.width} height={bar.height} fill="#2a1f16" />;
+      })}
+      <text x="90" y="68" textAnchor="middle" fontSize="8" fill="#6f5424" fontFamily="monospace">
+        {code}
+      </text>
+    </svg>
+  );
+}
+
+function ConnectionBadge({ status }: { status: ConnectionStatus }) {
+  const color = status.phase === "online" ? "bg-emerald-500" : status.phase === "saving" ? "bg-amber-500" : "bg-red-500";
+  return (
+    <span className="inline-flex items-center gap-2 rounded-full border border-[#d8b86a]/40 bg-[#fff8ec]/80 px-3 py-1 text-xs font-semibold text-[#5a421e] backdrop-blur">
+      <span className={cn("h-2 w-2 rounded-full", color)} />
+      {status.phase === "loading" ? "Connecting" : status.phase}
+      {status.realtime ? <span className="text-[#947033]">live</span> : null}
+    </span>
+  );
+}
+
+export default function App() {
+  const device = useDeviceProfile();
+  const [data, setData] = useState<AppData>(seedData);
+  const [status, setStatus] = useState<ConnectionStatus>({
+    phase: "loading",
+    message: "Connecting to Firebase Realtime Database",
+    lastSync: "Not synced yet",
+    realtime: false,
+  });
+  const [view, setView] = useState<"store" | "admin">("store");
+  const [session, setSession] = useState<AdminSession | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+
+  const refreshData = useCallback(async (silent = false) => {
+    if (!silent) {
+      setStatus((current) => ({ ...current, phase: "loading", message: "Reading Firebase data" }));
+    }
+    try {
+      const raw = await firebaseGet<RawFirebaseData | null>("");
+      setData(normalizeAppData(raw));
+      const patch = buildSeedPatch(raw);
+      if (Object.keys(patch).length) {
+        await firebasePatch("", patch);
+      }
+      setStatus((current) => ({
+        ...current,
+        phase: "online",
+        message: "Connected to Firebase Realtime Database",
+        lastSync: new Date().toLocaleTimeString(),
+      }));
+    } catch (error) {
+      setStatus((current) => ({ ...current, phase: "offline", message: readableError(error) }));
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshData();
+    const timer = window.setInterval(() => void refreshData(true), 30000);
+    return () => window.clearInterval(timer);
+  }, [refreshData]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 60000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !("EventSource" in window)) return;
+    const source = new EventSource(firebaseUrl(""));
+    const refreshFromStream = (_event: Event) => void refreshData(true);
+    source.addEventListener("put", refreshFromStream);
+    source.addEventListener("patch", refreshFromStream);
+    source.onopen = () => setStatus((current) => ({ ...current, realtime: true }));
+    source.onerror = () => setStatus((current) => ({ ...current, realtime: false }));
+    return () => source.close();
+  }, [refreshData]);
+
+  useEffect(() => {
+    const expiredProducts = data.products.filter((product) => isOfferExpired(product, now));
+    if (!expiredProducts.length) return;
+    const updates = expiredProducts.map<Product>((product) => ({ ...product, promoPrice: null, offerEndsAt: null }));
+    setData((current) => ({
+      ...current,
+      products: current.products.map((product) => updates.find((updated) => updated.id === product.id) ?? product),
+    }));
+    void Promise.all(updates.map((product) => firebasePut(`products/${product.id}`, product)))
+      .then(() => setStatus((current) => ({ ...current, phase: "online", message: "Expired offers reverted to base prices" })))
+      .catch((error: unknown) => setStatus((current) => ({ ...current, phase: "offline", message: readableError(error) })));
+  }, [data.products, now]);
+
+  useEffect(() => {
+    const depletedDiscounts = data.discountCodes.filter((discount) => discount.active && discount.used >= discount.usageLimit);
+    if (!depletedDiscounts.length) return;
+    const updates = depletedDiscounts.map<DiscountCode>((discount) => ({ ...discount, active: false }));
+    setData((current) => ({
+      ...current,
+      discountCodes: current.discountCodes.map((discount) => updates.find((updated) => updated.id === discount.id) ?? discount),
+    }));
+    void Promise.all(updates.map((discount) => firebasePut(`discountCodes/${discount.id}`, discount)))
+      .then(() => setStatus((current) => ({ ...current, phase: "online", message: "Discount usage limits enforced" })))
+      .catch((error: unknown) => setStatus((current) => ({ ...current, phase: "offline", message: readableError(error) })));
+  }, [data.discountCodes]);
+
+  const saveItem = useCallback(async (collection: CollectionKey, item: CollectionItem) => {
+    setData((current) => ({ ...current, [collection]: upsertEntities(current[collection] as Entity[], item) } as AppData));
+    setStatus((current) => ({ ...current, phase: "saving", message: "Saving change to Firebase" }));
+    try {
+      await firebasePut(`${collection}/${item.id}`, item);
+      setStatus((current) => ({
+        ...current,
+        phase: "online",
+        message: "Saved to Firebase Realtime Database",
+        lastSync: new Date().toLocaleTimeString(),
+      }));
+    } catch (error) {
+      setStatus((current) => ({ ...current, phase: "offline", message: readableError(error) }));
+    }
+  }, []);
+
+  const deleteItem = useCallback(async (collection: CollectionKey, id: string) => {
+    setData((current) => ({
+      ...current,
+      [collection]: (current[collection] as Entity[]).filter((item) => item.id !== id),
+    } as AppData));
+    setStatus((current) => ({ ...current, phase: "saving", message: "Deleting from Firebase" }));
+    try {
+      await firebaseDelete(`${collection}/${id}`);
+      setStatus((current) => ({
+        ...current,
+        phase: "online",
+        message: "Deleted from Firebase Realtime Database",
+        lastSync: new Date().toLocaleTimeString(),
+      }));
+    } catch (error) {
+      setStatus((current) => ({ ...current, phase: "offline", message: readableError(error) }));
+    }
+  }, []);
+
+  const saveLayout = useCallback(async (layout: LayoutConfig) => {
+    setData((current) => ({ ...current, layout }));
+    setStatus((current) => ({ ...current, phase: "saving", message: "Saving homepage layout" }));
+    try {
+      await firebasePut("layout", layout);
+      setStatus((current) => ({
+        ...current,
+        phase: "online",
+        message: "Homepage layout saved",
+        lastSync: new Date().toLocaleTimeString(),
+      }));
+    } catch (error) {
+      setStatus((current) => ({ ...current, phase: "offline", message: readableError(error) }));
+    }
+  }, []);
+
+  const handleLogin = useCallback(
+    async (username: string, password: string) => {
+      if (isMainAdminCredential(username, password)) {
+        setSession({ username: "Mohamed Nasser", role: "main" });
+        return true;
+      }
+      const passwordHash = await hashPassword(password);
+      const subAdmin = data.admins.find(
+        (admin) => admin.username.trim().toLowerCase() === username.trim().toLowerCase() && admin.passwordHash === passwordHash,
+      );
+      if (subAdmin) {
+        setSession({ username: subAdmin.username, role: "sub" });
+        return true;
+      }
+      return false;
+    },
+    [data.admins],
+  );
+
+  const placeOrder = useCallback(
+    async (draft: CheckoutDraft) => {
+      const product = data.products.find((item) => item.id === draft.productId);
+      if (!product) throw new Error("Product no longer exists.");
+      const selectedColor = product.colors.find((color) => color.id === draft.colorId) ?? product.colors[0];
+      if (!selectedColor) throw new Error("Product color is unavailable.");
+      const quantity = Math.max(1, Math.floor(draft.quantity));
+      const maximumQuantity = Math.min(product.internalStock, selectedColor.quantity);
+      if (quantity > maximumQuantity) throw new Error("Requested quantity is not available.");
+
+      const codeValue = draft.discountCode.trim().toUpperCase();
+      const discount = codeValue
+        ? data.discountCodes.find((item) => item.code.toUpperCase() === codeValue && item.active && discountRemaining(item) > 0)
+        : undefined;
+      if (codeValue && !discount) throw new Error("Discount code is inactive or has no remaining uses.");
+
+      const existingCustomer = data.customers.find((customer) => customer.email.toLowerCase() === draft.email.trim().toLowerCase());
+      const customer: Customer = existingCustomer
+        ? {
+            ...existingCustomer,
+            name: draft.customerName.trim() || existingCustomer.name,
+            phones: uniqueValues([...existingCustomer.phones, draft.phone]),
+            addresses: uniqueValues([...existingCustomer.addresses, draft.address]),
+          }
+        : {
+            id: newId("cus"),
+            name: draft.customerName.trim(),
+            email: draft.email.trim(),
+            phones: uniqueValues([draft.phone]),
+            addresses: uniqueValues([draft.address]),
+            createdAt: new Date().toISOString(),
+          };
+
+      const updatedProduct: Product = {
+        ...product,
+        internalStock: Math.max(0, product.internalStock - quantity),
+        colors: product.colors.map((color) =>
+          color.id === selectedColor.id ? { ...color, quantity: Math.max(0, color.quantity - quantity) } : color,
+        ),
+      };
+      const priceInfo = getPriceInfo(product, Date.now());
+      const subtotal = priceInfo.price * quantity;
+      const discountAmount = discount ? Math.round((subtotal * discount.percent) / 100) : 0;
+      const updatedDiscount = discount
+        ? { ...discount, used: discount.used + 1, active: discount.used + 1 < discount.usageLimit }
+        : undefined;
+      const order: Order = {
+        id: newId("ord"),
+        productId: product.id,
+        productType: getCategoryTrail(data.categories, product),
+        productName: product.name,
+        barcode: product.barcode,
+        color: selectedColor.name,
+        quantity,
+        customerId: customer.id,
+        customerName: customer.name,
+        phone: draft.phone.trim(),
+        address: draft.address.trim(),
+        unitPrice: priceInfo.price,
+        discountCode: updatedDiscount?.code ?? null,
+        discountAmount,
+        total: Math.max(0, subtotal - discountAmount),
+        status: "pending",
+        createdAt: new Date().toISOString(),
+      };
+
+      setData((current) => ({
+        ...current,
+        products: upsertEntities(current.products, updatedProduct),
+        customers: upsertEntities(current.customers, customer),
+        orders: [order, ...current.orders],
+        discountCodes: updatedDiscount ? upsertEntities(current.discountCodes, updatedDiscount) : current.discountCodes,
+      }));
+      setStatus((current) => ({ ...current, phase: "saving", message: "Writing order, stock, customer, and discount data" }));
+
+      try {
+        const writes = [
+          firebasePut(`products/${updatedProduct.id}`, updatedProduct),
+          firebasePut(`customers/${customer.id}`, customer),
+          firebasePut(`orders/${order.id}`, order),
         ];
+        if (updatedDiscount) writes.push(firebasePut(`discountCodes/${updatedDiscount.id}`, updatedDiscount));
+        await Promise.all(writes);
+        setStatus((current) => ({
+          ...current,
+          phase: "online",
+          message: "Order saved and inventory updated",
+          lastSync: new Date().toLocaleTimeString(),
+        }));
+      } catch (error) {
+        setStatus((current) => ({ ...current, phase: "offline", message: readableError(error) }));
+        throw error;
+      }
 
-        let products = JSON.parse(localStorage.getItem('aurelia_products')) || defaultProducts;
+      return order;
+    },
+    [data.categories, data.customers, data.discountCodes, data.products],
+  );
 
-        // Google Drive Link Converter Utility
-        function convertGoogleDriveLink(url) {
-            if (!url) return '';
-            if (url.includes('drive.google.com')) {
-                let fileIdMatch = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
-                if (fileIdMatch && fileIdMatch[1]) {
-                    return `https://lh3.googleusercontent.com/d/${fileIdMatch[1]}=s1000`;
+  return (
+    <div data-device={device.type} className="min-h-screen bg-[#fbf5ea] text-[#2a1f16]">
+      {view === "store" ? (
+        <Storefront
+          data={data}
+          device={device}
+          status={status}
+          now={now}
+          onOpenAdmin={() => setView("admin")}
+          onPlaceOrder={placeOrder}
+        />
+      ) : session ? (
+        <AdminDashboard
+          data={data}
+          device={device}
+          now={now}
+          session={session}
+          status={status}
+          onDeleteItem={deleteItem}
+          onLogout={() => setSession(null)}
+          onRefresh={() => refreshData(false)}
+          onSaveItem={saveItem}
+          onSaveLayout={saveLayout}
+          onStorefront={() => setView("store")}
+        />
+      ) : (
+        <AdminLogin onBackStore={() => setView("store")} onLogin={handleLogin} status={status} />
+      )}
+    </div>
+  );
+}
+
+function Storefront({
+  data,
+  device,
+  status,
+  now,
+  onOpenAdmin,
+  onPlaceOrder,
+}: {
+  data: AppData;
+  device: DeviceProfile;
+  status: ConnectionStatus;
+  now: number;
+  onOpenAdmin: () => void;
+  onPlaceOrder: (draft: CheckoutDraft) => Promise<Order>;
+}) {
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const visibleProducts = useMemo(
+    () => (categoryFilter === "all" ? data.products : data.products.filter((product) => product.categoryId === categoryFilter)),
+    [categoryFilter, data.products],
+  );
+  const offerProducts = useMemo(() => data.products.filter((product) => getPriceInfo(product, now).isOffer), [data.products, now]);
+
+  const renderSection = (section: LayoutSection) => {
+    if (section.id === "collection") {
+      return (
+        <StoreSection title="The House Edit" description="Precious jewelry and polished beauty objects curated for quiet statement moments.">
+          <div className="mb-8 flex flex-wrap gap-3">
+            <Button variant={categoryFilter === "all" ? "dark" : "ghost"} onClick={() => setCategoryFilter("all")}>
+              All pieces
+            </Button>
+            {data.categories.map((category) => (
+              <Button
+                key={category.id}
+                variant={categoryFilter === category.id ? "dark" : "ghost"}
+                onClick={() => setCategoryFilter(category.id)}
+              >
+                {category.name}
+              </Button>
+            ))}
+          </div>
+          <ProductGrid categories={data.categories} now={now} onSelect={setSelectedProduct} products={visibleProducts} />
+        </StoreSection>
+      );
+    }
+    if (section.id === "offers") {
+      return (
+        <StoreSection title="Golden Week" description="Timed promotions return to the original base price automatically when the offer ends.">
+          <ProductGrid categories={data.categories} compact now={now} onSelect={setSelectedProduct} products={offerProducts} />
+        </StoreSection>
+      );
+    }
+    if (section.id === "ritual") {
+      return (
+        <StoreSection title="Ritual Finish" description="Cream textures, amber perfume, satin lip color, and jewel-light accents in one refined routine.">
+          <div className="overflow-hidden rounded-[2rem] bg-[#efe3cf]">
+            <img src={COSMETIC_IMAGE} alt="Luxury cosmetics arranged on a cream shelf" className="h-[420px] w-full object-cover transition duration-700 hover:scale-105" />
+          </div>
+        </StoreSection>
+      );
+    }
+    return (
+      <StoreSection title="Atelier Care" description="Every order is prepared with internal barcode control, color-level stock checks, and concierge follow-up.">
+        <div className="space-y-6 text-lg leading-8 text-[#5f4b31]">
+          <p>
+            The storefront never exposes secret stock quantities or barcodes. Customers see availability status and optional scarcity messaging only when the
+            operational threshold is reached.
+          </p>
+          <p>
+            Orders write directly to Firebase, reduce internal inventory, preserve customer phones and addresses, and surface all details in operations.
+          </p>
+        </div>
+      </StoreSection>
+    );
+  };
+
+  return (
+    <main className="overflow-hidden bg-[#fbf5ea]">
+      <section className="relative min-h-[calc(var(--app-vh,1vh)*100)] overflow-hidden bg-[#22170f] text-[#fff8ec]">
+        <div
+          className="absolute inset-0 animate-hero-drift bg-cover bg-center"
+          style={{ backgroundImage: `url(${data.layout.heroImage || HERO_IMAGE})` }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#1d130d]/85 via-[#3b2b1d]/45 to-[#f1dca9]/10" />
+        <header className="relative z-10 flex items-center justify-between px-5 py-5 sm:px-8 lg:px-12">
+          <button className="text-left text-sm font-semibold uppercase tracking-[0.28em] text-[#fff8ec]" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
+            Maison Nasser
+          </button>
+          <div className="flex items-center gap-3">
+            {device.type !== "mobile" ? <ConnectionBadge status={status} /> : null}
+            <Button className="px-4 py-2" type="button" variant="light" onClick={onOpenAdmin}>
+              Admin
+            </Button>
+          </div>
+        </header>
+        <div className="relative z-10 flex min-h-[calc(var(--app-vh,1vh)*82)] items-center px-5 pb-16 pt-10 sm:px-8 lg:px-12">
+          <div className="max-w-5xl">
+            <h1 className="animate-rise-in font-serif text-6xl font-semibold uppercase leading-[0.88] tracking-[0.08em] text-[#fff6df] sm:text-7xl lg:text-9xl">
+              Maison Nasser
+            </h1>
+            <p className="mt-8 max-w-2xl animate-fade-in-slow text-2xl leading-tight text-[#f7ead2] sm:text-4xl lg:text-5xl">
+              Jewelry and beauty edited like heirlooms.
+            </p>
+            <p className="mt-6 max-w-xl animate-fade-in-slow text-base leading-8 text-[#f2dec0] sm:text-lg">
+              Cream, gold, pearl, and amber pieces with live stock control, timed offers, and concierge ordering connected to Firebase.
+            </p>
+            <div className="mt-9 flex animate-soft-pop flex-col gap-3 sm:flex-row">
+              <a className={cn(buttonBase, buttonVariants.gold)} href="#home-sections">
+                Explore collection
+              </a>
+              <a className={cn(buttonBase, buttonVariants.light)} href="#golden-offers">
+                View timed offers
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="home-sections" className="mx-auto grid max-w-7xl grid-cols-12 gap-10 px-5 py-16 sm:px-8 lg:px-12 lg:py-24">
+        {data.layout.sections.map((section) => (
+          <div id={section.id === "offers" ? "golden-offers" : undefined} key={section.id} className={sectionSpanClass(section.span)}>
+            {renderSection(section)}
+          </div>
+        ))}
+      </section>
+
+      <footer className="border-t border-[#e1d2b7] px-5 py-8 text-sm text-[#6b5739] sm:px-8 lg:px-12">
+        <div className="mx-auto flex max-w-7xl flex-col justify-between gap-3 sm:flex-row">
+          <span>Maison Nasser luxury commerce system</span>
+          <span>
+            {device.type} viewport: {device.width} x {device.height} {device.isTouch ? "touch" : "pointer"}
+          </span>
+        </div>
+      </footer>
+
+      {selectedProduct ? (
+        <CheckoutPanel
+          categories={data.categories}
+          now={now}
+          onClose={() => setSelectedProduct(null)}
+          onPlaceOrder={onPlaceOrder}
+          product={selectedProduct}
+        />
+      ) : null}
+    </main>
+  );
+}
+
+function StoreSection({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
+  return (
+    <section className="h-full">
+      <div className="mb-8 max-w-2xl">
+        <h2 className="font-serif text-4xl font-semibold tracking-tight text-[#2a1f16] sm:text-5xl">{title}</h2>
+        <p className="mt-4 text-base leading-7 text-[#6b5739]">{description}</p>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function ProductGrid({
+  categories,
+  compact = false,
+  now,
+  onSelect,
+  products,
+}: {
+  categories: Category[];
+  compact?: boolean;
+  now: number;
+  onSelect: (product: Product) => void;
+  products: Product[];
+}) {
+  if (!products.length) {
+    return <p className="rounded-3xl border border-[#decba8] p-6 text-[#6b5739]">No products match this section yet.</p>;
+  }
+  return (
+    <div className={cn("grid gap-8", compact ? "grid-cols-1" : "sm:grid-cols-2 xl:grid-cols-3")}>
+      {products.map((product) => (
+        <ProductTile categories={categories} key={product.id} now={now} onSelect={onSelect} product={product} />
+      ))}
+    </div>
+  );
+}
+
+function ProductTile({
+  categories,
+  now,
+  onSelect,
+  product,
+}: {
+  categories: Category[];
+  now: number;
+  onSelect: (product: Product) => void;
+  product: Product;
+}) {
+  const price = getPriceInfo(product, now);
+  const availability = availabilityFor(product);
+  return (
+    <article className="group">
+      <button className="w-full text-left" disabled={availability.soldOut} onClick={() => onSelect(product)} type="button">
+        <div className="aspect-[4/5] overflow-hidden rounded-[2rem] bg-[#ede1cc]">
+          <img alt={product.name} className="h-full w-full object-cover transition duration-700 group-hover:scale-105" src={product.image || HERO_IMAGE} />
+        </div>
+        <div className="pt-5">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[#9a7430]">{getCategoryTrail(categories, product)}</p>
+          <h3 className="mt-2 font-serif text-2xl font-semibold text-[#2a1f16]">{product.name}</h3>
+          <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
+            <span className="text-lg font-semibold text-[#2a1f16]">{formatCurrency(price.price)}</span>
+            {price.isOffer ? <span className="text-[#8f7c62] line-through">{formatCurrency(price.original)}</span> : null}
+            {price.isOffer ? <span className="text-[#9b6b1f]">{remainingOfferText(product, now)}</span> : null}
+          </div>
+          <div className="mt-3 flex items-center justify-between gap-3 text-sm text-[#6b5739]">
+            <span>{availability.status}</span>
+            <span>{availability.marketing}</span>
+          </div>
+        </div>
+      </button>
+    </article>
+  );
+}
+
+function CheckoutPanel({
+  categories,
+  now,
+  onClose,
+  onPlaceOrder,
+  product,
+}: {
+  categories: Category[];
+  now: number;
+  onClose: () => void;
+  onPlaceOrder: (draft: CheckoutDraft) => Promise<Order>;
+  product: Product;
+}) {
+  const firstAvailableColor = product.colors.find((color) => color.quantity > 0) ?? product.colors[0];
+  const [form, setForm] = useState({
+    customerName: "",
+    email: "",
+    phone: "",
+    address: "",
+    colorId: firstAvailableColor?.id ?? "",
+    quantity: "1",
+    discountCode: "",
+  });
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const selectedColor = product.colors.find((color) => color.id === form.colorId) ?? firstAvailableColor;
+  const maxQuantity = Math.max(0, Math.min(product.internalStock, selectedColor?.quantity ?? 0));
+  const price = getPriceInfo(product, now);
+  const availability = availabilityFor(product);
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    setError("");
+    setSuccess("");
+    if (!form.customerName.trim() || !form.email.trim() || !form.phone.trim() || !form.address.trim()) {
+      setError("Please complete name, email, phone, and address.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const order = await onPlaceOrder({
+        productId: product.id,
+        customerName: form.customerName,
+        email: form.email,
+        phone: form.phone,
+        address: form.address,
+        colorId: form.colorId,
+        quantity: Number(form.quantity) || 1,
+        discountCode: form.discountCode,
+      });
+      setSuccess(`Order ${order.id} saved. Operations can now view barcode, address, phone, color, and stock changes.`);
+    } catch (submitError) {
+      setError(readableError(submitError));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-[#1d130d]/60 p-3 backdrop-blur-sm sm:items-center sm:p-6">
+      <div className="max-h-[92vh] w-full max-w-5xl overflow-auto rounded-[2rem] bg-[#fff8ec] p-5 shadow-2xl sm:p-8">
+        <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
+          <div>
+            <div className="overflow-hidden rounded-[1.5rem] bg-[#efe3cf]">
+              <img alt={product.name} className="h-80 w-full object-cover" src={product.image || HERO_IMAGE} />
+            </div>
+            <p className="mt-5 text-xs font-semibold uppercase tracking-[0.22em] text-[#9a7430]">{getCategoryTrail(categories, product)}</p>
+            <h2 className="mt-2 font-serif text-4xl font-semibold text-[#2a1f16]">{product.name}</h2>
+            <div className="mt-4 flex flex-wrap gap-3 text-sm text-[#6b5739]">
+              <span className="font-semibold text-[#2a1f16]">{formatCurrency(price.price)}</span>
+              {price.isOffer ? <span>{remainingOfferText(product, now)}</span> : null}
+              <span>{availability.marketing}</span>
+            </div>
+          </div>
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className={labelClass}>Concierge checkout</p>
+                <h3 className="mt-2 font-serif text-3xl font-semibold">Reserve your piece</h3>
+              </div>
+              <Button type="button" variant="ghost" onClick={onClose}>
+                Close
+              </Button>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="space-y-2">
+                <span className={labelClass}>Name</span>
+                <input className={inputClass} value={form.customerName} onChange={(event) => setForm({ ...form, customerName: event.target.value })} />
+              </label>
+              <label className="space-y-2">
+                <span className={labelClass}>Email</span>
+                <input className={inputClass} type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} />
+              </label>
+              <label className="space-y-2">
+                <span className={labelClass}>Phone</span>
+                <input className={inputClass} value={form.phone} onChange={(event) => setForm({ ...form, phone: event.target.value })} />
+              </label>
+              <label className="space-y-2">
+                <span className={labelClass}>Color</span>
+                <select className={inputClass} value={form.colorId} onChange={(event) => setForm({ ...form, colorId: event.target.value })}>
+                  {product.colors.map((color) => (
+                    <option disabled={color.quantity <= 0} key={color.id} value={color.id}>
+                      {color.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="space-y-2">
+                <span className={labelClass}>Quantity</span>
+                <input
+                  className={inputClass}
+                  max={Math.max(1, maxQuantity)}
+                  min="1"
+                  type="number"
+                  value={form.quantity}
+                  onChange={(event) => setForm({ ...form, quantity: event.target.value })}
+                />
+              </label>
+              <label className="space-y-2">
+                <span className={labelClass}>Discount code</span>
+                <input className={inputClass} value={form.discountCode} onChange={(event) => setForm({ ...form, discountCode: event.target.value })} />
+              </label>
+            </div>
+            <label className="block space-y-2">
+              <span className={labelClass}>Delivery address</span>
+              <textarea className={cn(inputClass, "min-h-28")} value={form.address} onChange={(event) => setForm({ ...form, address: event.target.value })} />
+            </label>
+            <div className="rounded-[1.5rem] bg-[#f4ead9] p-4 text-sm text-[#5f4b31]">
+              Customer view: {availability.status}. {availability.marketing}. Internal stock and product barcode remain hidden.
+            </div>
+            {error ? <p className="rounded-2xl bg-red-50 p-3 text-sm text-red-700">{error}</p> : null}
+            {success ? <p className="rounded-2xl bg-emerald-50 p-3 text-sm text-emerald-800">{success}</p> : null}
+            <Button className="w-full" disabled={submitting || availability.soldOut || maxQuantity <= 0} type="submit" variant="gold">
+              {submitting ? "Saving order" : availability.soldOut ? "Sold Out" : "Place order"}
+            </Button>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AdminLogin({
+  onBackStore,
+  onLogin,
+  status,
+}: {
+  onBackStore: () => void;
+  onLogin: (username: string, password: string) => Promise<boolean>;
+  status: ConnectionStatus;
+}) {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (event: FormEvent) => {
+    event.preventDefault();
+    setLoading(true);
+    setError("");
+    const accepted = await onLogin(username, password);
+    setLoading(false);
+    if (!accepted) setError("Invalid administrator credentials.");
+  };
+
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,#fff3c4,#fbf5ea_40%,#e9dac0)] p-5">
+      <form className="w-full max-w-md rounded-[2rem] border border-[#d8b86a]/50 bg-white/70 p-7 shadow-xl shadow-[#c8aa6e]/20 backdrop-blur" onSubmit={handleSubmit}>
+        <div className="mb-8 flex items-start justify-between gap-4">
+          <div>
+            <p className={labelClass}>Operations access</p>
+            <h1 className="mt-2 font-serif text-4xl font-semibold text-[#2a1f16]">Admin dashboard</h1>
+          </div>
+          <Button type="button" variant="ghost" onClick={onBackStore}>
+            Store
+          </Button>
+        </div>
+        <div className="space-y-4">
+          <label className="block space-y-2">
+            <span className={labelClass}>Username</span>
+            <input className={inputClass} value={username} onChange={(event) => setUsername(event.target.value)} />
+          </label>
+          <label className="block space-y-2">
+            <span className={labelClass}>Password</span>
+            <input className={inputClass} type="password" value={password} onChange={(event) => setPassword(event.target.value)} />
+          </label>
+          {error ? <p className="rounded-2xl bg-red-50 p-3 text-sm text-red-700">{error}</p> : null}
+          <Button className="w-full" disabled={loading} type="submit" variant="dark">
+            {loading ? "Checking" : "Enter operations"}
+          </Button>
+          <div className="pt-2">
+            <ConnectionBadge status={status} />
+          </div>
+        </div>
+      </form>
+    </main>
+  );
+}
+
+function AdminDashboard({
+  data,
+  device,
+  now,
+  onDeleteItem,
+  onLogout,
+  onRefresh,
+  onSaveItem,
+  onSaveLayout,
+  onStorefront,
+  session,
+  status,
+}: {
+  data: AppData;
+  device: DeviceProfile;
+  now: number;
+  onDeleteItem: (collection: CollectionKey, id: string) => Promise<void>;
+  onLogout: () => void;
+  onRefresh: () => Promise<void>;
+  onSaveItem: (collection: CollectionKey, item: CollectionItem) => Promise<void>;
+  onSaveLayout: (layout: LayoutConfig) => Promise<void>;
+  onStorefront: () => void;
+  session: AdminSession;
+  status: ConnectionStatus;
+}) {
+  const [activeTab, setActiveTab] = useState<AdminTab>("overview");
+  const navItems: { id: AdminTab; label: string }[] = [
+    { id: "overview", label: "Overview" },
+    { id: "categories", label: "Categories" },
+    { id: "products", label: "Products" },
+    { id: "inventory", label: "Inventory" },
+    { id: "orders", label: "Orders" },
+    { id: "customers", label: "Customers" },
+    { id: "discounts", label: "Discounts" },
+    { id: "admins", label: "Sub-admins" },
+    { id: "layout", label: "Layout" },
+    { id: "sync", label: "Firebase" },
+  ];
+
+  const renderTab = () => {
+    if (activeTab === "overview") return <OverviewPanel data={data} now={now} />;
+    if (activeTab === "categories") return <CategoriesPanel categories={data.categories} onDeleteItem={onDeleteItem} onSaveItem={onSaveItem} />;
+    if (activeTab === "products") return <ProductsPanel data={data} now={now} onDeleteItem={onDeleteItem} onSaveItem={onSaveItem} />;
+    if (activeTab === "inventory") return <InventoryPanel categories={data.categories} onSaveItem={onSaveItem} products={data.products} />;
+    if (activeTab === "orders") return <OrdersPanel orders={data.orders} onSaveItem={onSaveItem} />;
+    if (activeTab === "customers") return <CustomersPanel customers={data.customers} onSaveItem={onSaveItem} />;
+    if (activeTab === "discounts") return <DiscountsPanel discounts={data.discountCodes} onDeleteItem={onDeleteItem} onSaveItem={onSaveItem} />;
+    if (activeTab === "admins") return <AdminsPanel admins={data.admins} onDeleteItem={onDeleteItem} onSaveItem={onSaveItem} session={session} />;
+    if (activeTab === "layout") return <LayoutCustomizer layout={data.layout} onSaveLayout={onSaveLayout} />;
+    return <SyncPanel onRefresh={onRefresh} status={status} />;
+  };
+
+  return (
+    <main className="min-h-screen bg-[#f6eddd]">
+      <div className="grid min-h-screen lg:grid-cols-[280px_1fr]">
+        <aside className="hidden border-r border-[#dfcfb2] bg-[#251b13] p-6 text-[#fff8ec] lg:block">
+          <div className="mb-10">
+            <p className="text-xs uppercase tracking-[0.28em] text-[#d8b86a]">Maison Nasser</p>
+            <h1 className="mt-2 font-serif text-3xl font-semibold">Operations</h1>
+          </div>
+          <nav className="space-y-2">
+            {navItems.map((item) => (
+              <button
+                className={cn(
+                  "w-full rounded-2xl px-4 py-3 text-left text-sm font-semibold transition",
+                  activeTab === item.id ? "bg-[#fff8ec] text-[#251b13]" : "text-[#ead9bd] hover:bg-white/10",
+                )}
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                type="button"
+              >
+                {item.label}
+              </button>
+            ))}
+          </nav>
+        </aside>
+        <section className="min-w-0 p-4 sm:p-6 lg:p-8">
+          <div className="mb-6 flex flex-col gap-4 rounded-[2rem] border border-[#dfcfb2] bg-white/70 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className={labelClass}>Signed in as {session.username}</p>
+              <h2 className="font-serif text-3xl font-semibold text-[#2a1f16]">Admin and operations dashboard</h2>
+              <p className="mt-1 text-sm text-[#6b5739]">
+                Device mode: {device.type} ({device.width} x {device.height})
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <ConnectionBadge status={status} />
+              <Button type="button" variant="ghost" onClick={onStorefront}>
+                Storefront
+              </Button>
+              <Button type="button" variant="danger" onClick={onLogout}>
+                Logout
+              </Button>
+            </div>
+          </div>
+          <div className="mb-6 flex gap-2 overflow-x-auto pb-2 lg:hidden">
+            {navItems.map((item) => (
+              <Button key={item.id} type="button" variant={activeTab === item.id ? "dark" : "ghost"} onClick={() => setActiveTab(item.id)}>
+                {item.label}
+              </Button>
+            ))}
+          </div>
+          {renderTab()}
+        </section>
+      </div>
+    </main>
+  );
+}
+
+function OverviewPanel({ data, now }: { data: AppData; now: number }) {
+  const revenue = data.orders.reduce((sum, order) => sum + order.total, 0);
+  const pendingOrders = data.orders.filter((order) => order.status === "pending" || order.status === "preparing").length;
+  const activeOffers = data.products.filter((product) => getPriceInfo(product, now).isOffer).length;
+  const lowStock = data.products.filter((product) => product.internalStock > 0 && product.internalStock <= product.marketingThreshold).length;
+  const metrics = [
+    { label: "Revenue", value: formatCurrency(revenue), note: "From stored orders" },
+    { label: "Open orders", value: pendingOrders.toString(), note: "Pending or preparing" },
+    { label: "Active offers", value: activeOffers.toString(), note: "Auto-expiring timers" },
+    { label: "Low stock", value: lowStock.toString(), note: "At customer threshold" },
+  ];
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {metrics.map((metric) => (
+          <div className={panelClass} key={metric.label}>
+            <p className={labelClass}>{metric.label}</p>
+            <p className="mt-3 text-3xl font-semibold text-[#2a1f16]">{metric.value}</p>
+            <p className="mt-2 text-sm text-[#6b5739]">{metric.note}</p>
+          </div>
+        ))}
+      </div>
+      <div className={panelClass}>
+        <h3 className="font-serif text-3xl font-semibold">Realtime operation map</h3>
+        <div className="mt-5 grid gap-4 lg:grid-cols-3">
+          <p className="rounded-3xl bg-[#f7ecd8] p-5 text-sm leading-7 text-[#5f4b31]">Orders create or update customer profiles with multiple phones and addresses.</p>
+          <p className="rounded-3xl bg-[#f7ecd8] p-5 text-sm leading-7 text-[#5f4b31]">Product stock is secret internally, while customer availability stays simplified.</p>
+          <p className="rounded-3xl bg-[#f7ecd8] p-5 text-sm leading-7 text-[#5f4b31]">Sub-admins share operational access without exposing customer-facing credentials.</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CategoriesPanel({
+  categories,
+  onDeleteItem,
+  onSaveItem,
+}: {
+  categories: Category[];
+  onDeleteItem: (collection: CollectionKey, id: string) => Promise<void>;
+  onSaveItem: (collection: CollectionKey, item: CollectionItem) => Promise<void>;
+}) {
+  const [categoryName, setCategoryName] = useState("");
+  const [subInputs, setSubInputs] = useState<Record<string, string>>({});
+
+  const addCategory = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!categoryName.trim()) return;
+    await onSaveItem("categories", { id: newId("cat"), name: categoryName.trim(), subcategories: [] });
+    setCategoryName("");
+  };
+
+  const addSubcategory = async (category: Category) => {
+    const name = subInputs[category.id]?.trim();
+    if (!name) return;
+    await onSaveItem("categories", {
+      ...category,
+      subcategories: [...category.subcategories, { id: newId("sub"), name }],
+    });
+    setSubInputs((current) => ({ ...current, [category.id]: "" }));
+  };
+
+  return (
+    <div className="space-y-6">
+      <form className={cn(panelClass, "grid gap-4 sm:grid-cols-[1fr_auto] sm:items-end")} onSubmit={addCategory}>
+        <label className="space-y-2">
+          <span className={labelClass}>Main category</span>
+          <input className={inputClass} placeholder="Jewelry, Makeup, Fragrance" value={categoryName} onChange={(event) => setCategoryName(event.target.value)} />
+        </label>
+        <Button type="submit" variant="gold">
+          Add category
+        </Button>
+      </form>
+      <div className="grid gap-5 lg:grid-cols-2">
+        {categories.map((category) => (
+          <div className={panelClass} key={category.id}>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className={labelClass}>Folder</p>
+                <h3 className="mt-2 font-serif text-3xl font-semibold">{category.name}</h3>
+              </div>
+              <Button type="button" variant="danger" onClick={() => onDeleteItem("categories", category.id)}>
+                Delete
+              </Button>
+            </div>
+            <div className="mt-5 flex flex-wrap gap-2">
+              {category.subcategories.map((subcategory) => (
+                <span className="rounded-full bg-[#f4ead9] px-4 py-2 text-sm text-[#5f4b31]" key={subcategory.id}>
+                  {subcategory.name}
+                </span>
+              ))}
+            </div>
+            <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto]">
+              <input
+                className={inputClass}
+                placeholder="Add internal subcategory"
+                value={subInputs[category.id] ?? ""}
+                onChange={(event) => setSubInputs((current) => ({ ...current, [category.id]: event.target.value }))}
+              />
+              <Button type="button" variant="ghost" onClick={() => addSubcategory(category)}>
+                Add subcategory
+              </Button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+type ProductFormState = {
+  id: string;
+  name: string;
+  image: string;
+  categoryId: string;
+  subcategoryId: string;
+  basePrice: string;
+  promoPrice: string;
+  offerDays: string;
+  internalStock: string;
+  marketingThreshold: string;
+  colors: ProductColor[];
+};
+
+function createProductForm(categories: Category[]): ProductFormState {
+  return {
+    id: "",
+    name: "",
+    image: "",
+    categoryId: categories[0]?.id ?? "",
+    subcategoryId: categories[0]?.subcategories[0]?.id ?? "",
+    basePrice: "",
+    promoPrice: "",
+    offerDays: "7",
+    internalStock: "1",
+    marketingThreshold: "5",
+    colors: [{ id: newId("color"), name: "Gold", hex: "#d8b86a", quantity: 1 }],
+  };
+}
+
+function ProductsPanel({
+  data,
+  now,
+  onDeleteItem,
+  onSaveItem,
+}: {
+  data: AppData;
+  now: number;
+  onDeleteItem: (collection: CollectionKey, id: string) => Promise<void>;
+  onSaveItem: (collection: CollectionKey, item: CollectionItem) => Promise<void>;
+}) {
+  const [form, setForm] = useState<ProductFormState>(() => createProductForm(data.categories));
+  const selectedCategory = data.categories.find((category) => category.id === form.categoryId) ?? data.categories[0];
+
+  useEffect(() => {
+    if (!form.categoryId && data.categories[0]) {
+      setForm((current) => ({ ...current, categoryId: data.categories[0].id, subcategoryId: data.categories[0].subcategories[0]?.id ?? "" }));
+    }
+  }, [data.categories, form.categoryId]);
+
+  const resetForm = () => setForm(createProductForm(data.categories));
+
+  const editProduct = (product: Product) => {
+    const remainingDays = product.offerEndsAt ? Math.max(1, Math.ceil((new Date(product.offerEndsAt).getTime() - Date.now()) / DAY_MS)) : 7;
+    setForm({
+      id: product.id,
+      name: product.name,
+      image: product.image,
+      categoryId: product.categoryId,
+      subcategoryId: product.subcategoryId,
+      basePrice: String(product.basePrice),
+      promoPrice: product.promoPrice ? String(product.promoPrice) : "",
+      offerDays: String(remainingDays),
+      internalStock: String(product.internalStock),
+      marketingThreshold: String(product.marketingThreshold),
+      colors: product.colors.length ? product.colors : [{ id: newId("color"), name: "Gold", hex: "#d8b86a", quantity: 1 }],
+    });
+  };
+
+  const submitProduct = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!form.name.trim() || !form.categoryId) return;
+    const existingProduct = data.products.find((product) => product.id === form.id);
+    const promoPrice = form.promoPrice.trim() ? Number(form.promoPrice) || null : null;
+    const product: Product = {
+      id: form.id || newId("prod"),
+      name: form.name.trim(),
+      image: form.image.trim() || HERO_IMAGE,
+      categoryId: form.categoryId,
+      subcategoryId: form.subcategoryId,
+      basePrice: Number(form.basePrice) || 0,
+      promoPrice,
+      offerEndsAt: promoPrice ? new Date(Date.now() + (Number(form.offerDays) || 7) * DAY_MS).toISOString() : null,
+      internalStock: Math.max(0, Number(form.internalStock) || 0),
+      marketingThreshold: Math.max(1, Number(form.marketingThreshold) || 1),
+      barcode: existingProduct?.barcode ?? generateBarcode(form.categoryId, form.name),
+      colors: form.colors.map((color) => ({ ...color, name: color.name.trim() || "Default", quantity: Math.max(0, Number(color.quantity) || 0) })),
+      createdAt: existingProduct?.createdAt ?? new Date().toISOString(),
+    };
+    await onSaveItem("products", product);
+    resetForm();
+  };
+
+  return (
+    <div className="space-y-6">
+      <form className={panelClass} onSubmit={submitProduct}>
+        <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+          <div>
+            <p className={labelClass}>Product and offer editor</p>
+            <h3 className="font-serif text-3xl font-semibold">{form.id ? "Edit product" : "Add product"}</h3>
+          </div>
+          {form.id ? (
+            <Button type="button" variant="ghost" onClick={resetForm}>
+              Cancel edit
+            </Button>
+          ) : null}
+        </div>
+        <div className="grid gap-4 lg:grid-cols-3">
+          <label className="space-y-2 lg:col-span-2">
+            <span className={labelClass}>Name</span>
+            <input className={inputClass} value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} />
+          </label>
+          <label className="space-y-2">
+            <span className={labelClass}>Image URL</span>
+            <input className={inputClass} value={form.image} onChange={(event) => setForm({ ...form, image: event.target.value })} />
+          </label>
+          <label className="space-y-2">
+            <span className={labelClass}>Category</span>
+            <select
+              className={inputClass}
+              value={form.categoryId}
+              onChange={(event) => {
+                const nextCategory = data.categories.find((category) => category.id === event.target.value);
+                setForm({ ...form, categoryId: event.target.value, subcategoryId: nextCategory?.subcategories[0]?.id ?? "" });
+              }}
+            >
+              {data.categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="space-y-2">
+            <span className={labelClass}>Subcategory</span>
+            <select className={inputClass} value={form.subcategoryId} onChange={(event) => setForm({ ...form, subcategoryId: event.target.value })}>
+              {selectedCategory?.subcategories.map((subcategory) => (
+                <option key={subcategory.id} value={subcategory.id}>
+                  {subcategory.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="space-y-2">
+            <span className={labelClass}>Base price</span>
+            <input className={inputClass} min="0" type="number" value={form.basePrice} onChange={(event) => setForm({ ...form, basePrice: event.target.value })} />
+          </label>
+          <label className="space-y-2">
+            <span className={labelClass}>Promotional price</span>
+            <input className={inputClass} min="0" type="number" value={form.promoPrice} onChange={(event) => setForm({ ...form, promoPrice: event.target.value })} />
+          </label>
+          <label className="space-y-2">
+            <span className={labelClass}>Offer duration days</span>
+            <input className={inputClass} min="1" type="number" value={form.offerDays} onChange={(event) => setForm({ ...form, offerDays: event.target.value })} />
+          </label>
+          <label className="space-y-2">
+            <span className={labelClass}>Secret internal stock</span>
+            <input className={inputClass} min="0" type="number" value={form.internalStock} onChange={(event) => setForm({ ...form, internalStock: event.target.value })} />
+          </label>
+          <label className="space-y-2">
+            <span className={labelClass}>Customer threshold</span>
+            <input className={inputClass} min="1" type="number" value={form.marketingThreshold} onChange={(event) => setForm({ ...form, marketingThreshold: event.target.value })} />
+          </label>
+        </div>
+        <div className="mt-5 space-y-3">
+          <p className={labelClass}>Colors and quantities</p>
+          {form.colors.map((color) => (
+            <div className="grid gap-3 sm:grid-cols-[1fr_120px_120px_auto]" key={color.id}>
+              <input
+                className={inputClass}
+                value={color.name}
+                onChange={(event) => setForm({ ...form, colors: form.colors.map((item) => (item.id === color.id ? { ...item, name: event.target.value } : item)) })}
+              />
+              <input
+                className={inputClass}
+                type="color"
+                value={color.hex}
+                onChange={(event) => setForm({ ...form, colors: form.colors.map((item) => (item.id === color.id ? { ...item, hex: event.target.value } : item)) })}
+              />
+              <input
+                className={inputClass}
+                min="0"
+                type="number"
+                value={color.quantity}
+                onChange={(event) =>
+                  setForm({ ...form, colors: form.colors.map((item) => (item.id === color.id ? { ...item, quantity: Number(event.target.value) || 0 } : item)) })
                 }
-            }
-            return url;
-        }
+              />
+              <Button
+                disabled={form.colors.length === 1}
+                type="button"
+                variant="danger"
+                onClick={() => setForm({ ...form, colors: form.colors.filter((item) => item.id !== color.id) })}
+              >
+                Remove
+              </Button>
+            </div>
+          ))}
+          <Button type="button" variant="ghost" onClick={() => setForm({ ...form, colors: [...form.colors, { id: newId("color"), name: "New color", hex: "#d8b86a", quantity: 1 }] })}>
+            Add color
+          </Button>
+        </div>
+        <Button className="mt-6" type="submit" variant="gold">
+          Save product
+        </Button>
+      </form>
 
-        // Device Detection & Responsive UI Adjustments
-        function updateDeviceDetectionSystem() {
-            const width = window.innerWidth;
-            document.getElementById('screen-width-val').textContent = width;
-            let category = 'Desktop (1024px+)';
-            let categoryKey = 'desktop';
+      <div className="grid gap-5 xl:grid-cols-2">
+        {data.products.map((product) => {
+          const price = getPriceInfo(product, now);
+          return (
+            <div className={panelClass} key={product.id}>
+              <div className="flex gap-4">
+                <img alt={product.name} className="h-28 w-24 rounded-3xl object-cover" src={product.image || HERO_IMAGE} />
+                <div className="min-w-0 flex-1">
+                  <p className={labelClass}>{getCategoryTrail(data.categories, product)}</p>
+                  <h3 className="mt-1 font-serif text-2xl font-semibold">{product.name}</h3>
+                  <p className="mt-2 text-sm text-[#6b5739]">
+                    {formatCurrency(price.price)} {price.isOffer ? `offer, ${remainingOfferText(product, now)}` : "base price"}
+                  </p>
+                  <p className="mt-1 font-mono text-xs text-[#7e622c]">{product.barcode}</p>
+                </div>
+              </div>
+              <div className="mt-5 flex flex-wrap gap-2">
+                <Button type="button" variant="ghost" onClick={() => editProduct(product)}>
+                  Edit
+                </Button>
+                <Button type="button" variant="danger" onClick={() => onDeleteItem("products", product.id)}>
+                  Delete
+                </Button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
-            if (width < 640) {
-                category = 'Phone / Mobile (375px - 480px)';
-                categoryKey = 'mobile';
-            } else if (width >= 640 && width < 1024) {
-                category = 'Tablet / iPad (768px - 1024px)';
-                categoryKey = 'tablet';
-            }
-
-            document.getElementById('device-category-val').textContent = category;
-            document.getElementById('active-viewport-status').textContent = `ACTIVE VIEWPORT: ${category.toUpperCase()} (${width}x${window.innerHeight}px)`;
-        }
-
-        window.addEventListener('resize', updateDeviceDetectionSystem);
-        window.addEventListener('DOMContentLoaded', updateDeviceDetectionSystem);
-
-        // Render Products on Storefront
-        function renderProducts() {
-            const grid = document.getElementById('products-grid');
-            grid.innerHTML = '';
-
-            const isAdmin = currentUser && currentUser.name === 'Mohamed Nasser';
-            if (isAdmin) {
-                document.getElementById('add-product-btn').classList.remove('hidden');
-                document.getElementById('admin-panel-notice').innerHTML = `
-                    <div>
-                        <span class="text-luxgold font-semibold uppercase tracking-wider block mb-1"><i class="fa-solid fa-shield-halved mr-1"></i> Admin Mohamed Nasser Active</span>
-                        <p class="text-gray-300">Inline editing enabled: Drag resize handles, price editors, Google Drive link auto-converter, and discount countdown timers are active.</p>
+function InventoryPanel({
+  categories,
+  onSaveItem,
+  products,
+}: {
+  categories: Category[];
+  onSaveItem: (collection: CollectionKey, item: CollectionItem) => Promise<void>;
+  products: Product[];
+}) {
+  return (
+    <div className="space-y-5">
+      {products.map((product) => {
+        const availability = availabilityFor(product);
+        return (
+          <div className={panelClass} key={product.id}>
+            <div className="grid gap-5 xl:grid-cols-[1fr_240px]">
+              <div>
+                <p className={labelClass}>{getCategoryTrail(categories, product)}</p>
+                <h3 className="mt-2 font-serif text-3xl font-semibold">{product.name}</h3>
+                <p className="mt-2 text-sm text-[#6b5739]">
+                  Customer display: {availability.status} / {availability.marketing}
+                </p>
+                <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                  <label className="space-y-2">
+                    <span className={labelClass}>Secret internal inventory</span>
+                    <input
+                      className={inputClass}
+                      min="0"
+                      type="number"
+                      value={product.internalStock}
+                      onChange={(event) => onSaveItem("products", { ...product, internalStock: Math.max(0, Number(event.target.value) || 0) })}
+                    />
+                  </label>
+                  <label className="space-y-2">
+                    <span className={labelClass}>Marketing threshold</span>
+                    <input
+                      className={inputClass}
+                      min="1"
+                      type="number"
+                      value={product.marketingThreshold}
+                      onChange={(event) => onSaveItem("products", { ...product, marketingThreshold: Math.max(1, Number(event.target.value) || 1) })}
+                    />
+                  </label>
+                </div>
+                <div className="mt-5 space-y-3">
+                  <p className={labelClass}>Color-level quantities</p>
+                  {product.colors.map((color) => (
+                    <div className="grid gap-3 sm:grid-cols-[30px_1fr_120px]" key={color.id}>
+                      <span className="h-8 w-8 rounded-full border border-[#c9ad72]" style={{ backgroundColor: color.hex }} />
+                      <span className="flex items-center text-sm font-semibold text-[#3d2d1c]">{color.name}</span>
+                      <input
+                        className={inputClass}
+                        min="0"
+                        type="number"
+                        value={color.quantity}
+                        onChange={(event) =>
+                          onSaveItem("products", {
+                            ...product,
+                            colors: product.colors.map((item) => (item.id === color.id ? { ...item, quantity: Math.max(0, Number(event.target.value) || 0) } : item)),
+                          })
+                        }
+                      />
                     </div>
-                `;
-            } else {
-                document.getElementById('add-product-btn').classList.add('hidden');
-            }
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className={labelClass}>Admin barcode</p>
+                <div className="mt-3 rounded-3xl bg-white p-3">
+                  <BarcodeSvg code={product.barcode} />
+                </div>
+                <p className="mt-3 text-xs leading-6 text-[#6b5739]">Hidden from customers. Appears in order operations for fulfillment.</p>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
-            products.forEach((prod, index) => {
-                let timerHtml = '';
-                if (prod.timerEnd && prod.timerEnd > Date.now()) {
-                    const timeLeft = Math.floor((prod.timerEnd - Date.now()) / 1000);
-                    const hours = Math.floor(timeLeft / 3600);
-                    const mins = Math.floor((timeLeft % 3600) / 60);
-                    timerHtml = `<div class="bg-luxgold/20 text-luxdark text-[10px] px-2 py-1 rounded font-semibold mb-2 flex items-center justify-between">
-                        <span><i class="fa-solid fa-stopwatch mr-1"></i> Discount Timer:</span>
-                        <span class="countdown-clock" data-end="${prod.timerEnd}">${hours}h ${mins}m left</span>
-                    </div>`;
+function OrdersPanel({
+  onSaveItem,
+  orders,
+}: {
+  onSaveItem: (collection: CollectionKey, item: CollectionItem) => Promise<void>;
+  orders: Order[];
+}) {
+  const sortedOrders = [...orders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const statuses: OrderStatus[] = ["pending", "preparing", "shipped", "completed", "cancelled"];
+  return (
+    <div className="space-y-5">
+      {sortedOrders.map((order) => (
+        <div className={panelClass} key={order.id}>
+          <div className="grid gap-5 xl:grid-cols-[1.3fr_0.7fr]">
+            <div>
+              <p className={labelClass}>Order {order.id}</p>
+              <h3 className="mt-2 font-serif text-3xl font-semibold">{order.productName}</h3>
+              <div className="mt-4 grid gap-3 text-sm text-[#5f4b31] md:grid-cols-2">
+                <p>Product type: {order.productType}</p>
+                <p>Barcode: {order.barcode}</p>
+                <p>Color: {order.color}</p>
+                <p>Requested quantity: {order.quantity}</p>
+                <p>Customer: {order.customerName}</p>
+                <p>Phone: {order.phone}</p>
+                <p className="md:col-span-2">Address: {order.address}</p>
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div className="rounded-3xl bg-[#f7ecd8] p-4">
+                <p className={labelClass}>Total</p>
+                <p className="mt-2 text-3xl font-semibold">{formatCurrency(order.total)}</p>
+                <p className="mt-1 text-sm text-[#6b5739]">{formatDate(order.createdAt)}</p>
+              </div>
+              <label className="block space-y-2">
+                <span className={labelClass}>Status</span>
+                <select className={inputClass} value={order.status} onChange={(event) => onSaveItem("orders", { ...order, status: event.target.value as OrderStatus })}>
+                  {statuses.map((statusOption) => (
+                    <option key={statusOption} value={statusOption}>
+                      {statusOption}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function CustomersPanel({
+  customers,
+  onSaveItem,
+}: {
+  customers: Customer[];
+  onSaveItem: (collection: CollectionKey, item: CollectionItem) => Promise<void>;
+}) {
+  const [form, setForm] = useState({ name: "", email: "", phones: "", addresses: "" });
+  const [additions, setAdditions] = useState<Record<string, { phone: string; address: string }>>({});
+
+  const addCustomer = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!form.name.trim() || !form.email.trim()) return;
+    await onSaveItem("customers", {
+      id: newId("cus"),
+      name: form.name.trim(),
+      email: form.email.trim(),
+      phones: splitMultiValue(form.phones),
+      addresses: splitMultiValue(form.addresses),
+      createdAt: new Date().toISOString(),
+    });
+    setForm({ name: "", email: "", phones: "", addresses: "" });
+  };
+
+  const addCustomerDetail = async (customer: Customer, type: "phone" | "address") => {
+    const value = additions[customer.id]?.[type]?.trim();
+    if (!value) return;
+    await onSaveItem("customers", {
+      ...customer,
+      phones: type === "phone" ? uniqueValues([...customer.phones, value]) : customer.phones,
+      addresses: type === "address" ? uniqueValues([...customer.addresses, value]) : customer.addresses,
+    });
+    setAdditions((current) => ({ ...current, [customer.id]: { ...(current[customer.id] ?? { phone: "", address: "" }), [type]: "" } }));
+  };
+
+  return (
+    <div className="space-y-6">
+      <form className={panelClass} onSubmit={addCustomer}>
+        <p className={labelClass}>Customer management</p>
+        <div className="mt-4 grid gap-4 lg:grid-cols-2">
+          <input className={inputClass} placeholder="Name" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} />
+          <input className={inputClass} placeholder="Email" type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} />
+          <textarea className={cn(inputClass, "min-h-24")} placeholder="Phones separated by comma or line" value={form.phones} onChange={(event) => setForm({ ...form, phones: event.target.value })} />
+          <textarea className={cn(inputClass, "min-h-24")} placeholder="Addresses separated by comma or line" value={form.addresses} onChange={(event) => setForm({ ...form, addresses: event.target.value })} />
+        </div>
+        <Button className="mt-4" type="submit" variant="gold">
+          Add customer
+        </Button>
+      </form>
+      <div className="grid gap-5 xl:grid-cols-2">
+        {customers.map((customer) => {
+          const draft = additions[customer.id] ?? { phone: "", address: "" };
+          return (
+            <div className={panelClass} key={customer.id}>
+              <p className={labelClass}>{customer.email}</p>
+              <h3 className="mt-2 font-serif text-3xl font-semibold">{customer.name}</h3>
+              <div className="mt-5 grid gap-4 md:grid-cols-2">
+                <div>
+                  <p className={labelClass}>Phones</p>
+                  <ul className="mt-2 space-y-2 text-sm text-[#5f4b31]">
+                    {customer.phones.map((phone) => (
+                      <li key={phone}>{phone}</li>
+                    ))}
+                  </ul>
+                  <div className="mt-3 flex gap-2">
+                    <input
+                      className={inputClass}
+                      placeholder="New phone"
+                      value={draft.phone}
+                      onChange={(event) => setAdditions((current) => ({ ...current, [customer.id]: { ...draft, phone: event.target.value } }))}
+                    />
+                    <Button type="button" variant="ghost" onClick={() => addCustomerDetail(customer, "phone")}>
+                      Add
+                    </Button>
+                  </div>
+                </div>
+                <div>
+                  <p className={labelClass}>Addresses</p>
+                  <ul className="mt-2 space-y-2 text-sm text-[#5f4b31]">
+                    {customer.addresses.map((address) => (
+                      <li key={address}>{address}</li>
+                    ))}
+                  </ul>
+                  <div className="mt-3 flex gap-2">
+                    <input
+                      className={inputClass}
+                      placeholder="New address"
+                      value={draft.address}
+                      onChange={(event) => setAdditions((current) => ({ ...current, [customer.id]: { ...draft, address: event.target.value } }))}
+                    />
+                    <Button type="button" variant="ghost" onClick={() => addCustomerDetail(customer, "address")}>
+                      Add
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function DiscountsPanel({
+  discounts,
+  onDeleteItem,
+  onSaveItem,
+}: {
+  discounts: DiscountCode[];
+  onDeleteItem: (collection: CollectionKey, id: string) => Promise<void>;
+  onSaveItem: (collection: CollectionKey, item: CollectionItem) => Promise<void>;
+}) {
+  const [form, setForm] = useState({ code: "", percent: "10", usageLimit: "20" });
+
+  const addDiscount = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!form.code.trim()) return;
+    await onSaveItem("discountCodes", {
+      id: newId("disc"),
+      code: form.code.trim().toUpperCase(),
+      percent: Math.max(1, Math.min(90, Number(form.percent) || 1)),
+      usageLimit: Math.max(1, Number(form.usageLimit) || 1),
+      used: 0,
+      active: true,
+      createdAt: new Date().toISOString(),
+    });
+    setForm({ code: "", percent: "10", usageLimit: "20" });
+  };
+
+  return (
+    <div className="space-y-6">
+      <form className={cn(panelClass, "grid gap-4 lg:grid-cols-[1fr_160px_180px_auto] lg:items-end")} onSubmit={addDiscount}>
+        <label className="space-y-2">
+          <span className={labelClass}>Code</span>
+          <input className={inputClass} placeholder="GOLD10" value={form.code} onChange={(event) => setForm({ ...form, code: event.target.value })} />
+        </label>
+        <label className="space-y-2">
+          <span className={labelClass}>Percent</span>
+          <input className={inputClass} min="1" max="90" type="number" value={form.percent} onChange={(event) => setForm({ ...form, percent: event.target.value })} />
+        </label>
+        <label className="space-y-2">
+          <span className={labelClass}>Usage limit</span>
+          <input className={inputClass} min="1" type="number" value={form.usageLimit} onChange={(event) => setForm({ ...form, usageLimit: event.target.value })} />
+        </label>
+        <Button type="submit" variant="gold">
+          Create code
+        </Button>
+      </form>
+      <div className="grid gap-5 xl:grid-cols-2">
+        {discounts.map((discount) => {
+          const remaining = discountRemaining(discount);
+          return (
+            <div className={panelClass} key={discount.id}>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className={labelClass}>{discount.active ? "Active" : "Inactive"}</p>
+                  <h3 className="mt-2 font-mono text-3xl font-semibold">{discount.code}</h3>
+                </div>
+                <Button type="button" variant="danger" onClick={() => onDeleteItem("discountCodes", discount.id)}>
+                  Delete
+                </Button>
+              </div>
+              <div className="mt-5 grid gap-3 text-sm text-[#5f4b31] sm:grid-cols-3">
+                <p>{discount.percent}% off</p>
+                <p>Used {discount.used} / {discount.usageLimit}</p>
+                <p>{remaining} uses remaining</p>
+              </div>
+              <div className="mt-5 flex gap-2">
+                <Button
+                  disabled={remaining <= 0}
+                  type="button"
+                  variant="ghost"
+                  onClick={() => onSaveItem("discountCodes", { ...discount, active: !discount.active && remaining > 0 })}
+                >
+                  {discount.active ? "Deactivate" : "Activate"}
+                </Button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function AdminsPanel({
+  admins,
+  onDeleteItem,
+  onSaveItem,
+  session,
+}: {
+  admins: SubAdmin[];
+  onDeleteItem: (collection: CollectionKey, id: string) => Promise<void>;
+  onSaveItem: (collection: CollectionKey, item: CollectionItem) => Promise<void>;
+  session: AdminSession;
+}) {
+  const [form, setForm] = useState({ username: "", password: "" });
+  const [error, setError] = useState("");
+
+  const addAdmin = async (event: FormEvent) => {
+    event.preventDefault();
+    setError("");
+    if (!form.username.trim() || form.password.length < 6) {
+      setError("Enter a username and a password of at least 6 characters.");
+      return;
+    }
+    if (admins.some((admin) => admin.username.trim().toLowerCase() === form.username.trim().toLowerCase())) {
+      setError("A sub-admin with this username already exists.");
+      return;
+    }
+    await onSaveItem("admins", {
+      id: newId("admin"),
+      username: form.username.trim(),
+      passwordHash: await hashPassword(form.password),
+      createdAt: new Date().toISOString(),
+    });
+    setForm({ username: "", password: "" });
+  };
+
+  return (
+    <div className="space-y-6">
+      <form className={panelClass} onSubmit={addAdmin}>
+        <p className={labelClass}>Equivalent operational privileges</p>
+        <h3 className="mt-2 font-serif text-3xl font-semibold">Create sub-admin</h3>
+        <p className="mt-2 text-sm text-[#6b5739]">Main owner credentials are never printed in the customer storefront. Sub-admin passwords are stored as hashes.</p>
+        <div className="mt-5 grid gap-4 sm:grid-cols-2">
+          <input className={inputClass} placeholder="Sub-admin username" value={form.username} onChange={(event) => setForm({ ...form, username: event.target.value })} />
+          <input className={inputClass} placeholder="Temporary password" type="password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} />
+        </div>
+        {error ? <p className="mt-4 rounded-2xl bg-red-50 p-3 text-sm text-red-700">{error}</p> : null}
+        <Button className="mt-4" type="submit" variant="gold">
+          Create sub-admin
+        </Button>
+      </form>
+      <div className="grid gap-5 xl:grid-cols-2">
+        {admins.map((admin) => (
+          <div className={panelClass} key={admin.id}>
+            <p className={labelClass}>Sub-admin</p>
+            <h3 className="mt-2 font-serif text-3xl font-semibold">{admin.username}</h3>
+            <p className="mt-2 text-sm text-[#6b5739]">Created {formatDate(admin.createdAt)}</p>
+            <Button className="mt-5" disabled={session.username === admin.username} type="button" variant="danger" onClick={() => onDeleteItem("admins", admin.id)}>
+              Delete access
+            </Button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function LayoutCustomizer({ layout, onSaveLayout }: { layout: LayoutConfig; onSaveLayout: (layout: LayoutConfig) => Promise<void> }) {
+  const [draft, setDraft] = useState(layout);
+  const [heroImage, setHeroImage] = useState(layout.heroImage);
+  const [draggingId, setDraggingId] = useState<LayoutSectionId | null>(null);
+
+  useEffect(() => {
+    setDraft(layout);
+    setHeroImage(layout.heroImage);
+  }, [layout]);
+
+  useEffect(() => {
+    if (!draggingId) return;
+    const endDrag = () => {
+      setDraggingId(null);
+      void onSaveLayout(draft);
+    };
+    window.addEventListener("pointerup", endDrag);
+    window.addEventListener("pointercancel", endDrag);
+    return () => {
+      window.removeEventListener("pointerup", endDrag);
+      window.removeEventListener("pointercancel", endDrag);
+    };
+  }, [draft, draggingId, onSaveLayout]);
+
+  const changeSpan = (section: LayoutSection) => {
+    const order: LayoutSpan[] = ["full", "wide", "compact", "half"];
+    const nextSpan = order[(order.indexOf(section.span) + 1) % order.length];
+    const nextLayout = { ...draft, sections: draft.sections.map((item) => (item.id === section.id ? { ...item, span: nextSpan } : item)) };
+    setDraft(nextLayout);
+    void onSaveLayout(nextLayout);
+  };
+
+  const applyPreset = (preset: "reverse" | "twoTop" | "editorial") => {
+    const sections = [...draft.sections];
+    const nextSections = preset === "reverse" ? sections.reverse() : sections;
+    const resized: LayoutSection[] = nextSections.map((section, index) => {
+      if (preset === "twoTop") return { ...section, span: index < 2 ? "half" : "full" };
+      if (preset === "editorial") return { ...section, span: index % 2 === 0 ? "wide" : "compact" };
+      return section;
+    });
+    const nextLayout = { ...draft, sections: resized };
+    setDraft(nextLayout);
+    void onSaveLayout(nextLayout);
+  };
+
+  const saveHeroImage = async (event: FormEvent) => {
+    event.preventDefault();
+    const nextLayout = { ...draft, heroImage: heroImage.trim() || HERO_IMAGE };
+    setDraft(nextLayout);
+    await onSaveLayout(nextLayout);
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className={panelClass}>
+        <p className={labelClass}>Drag-and-drop homepage sections</p>
+        <h3 className="mt-2 font-serif text-3xl font-semibold">Interactive layout customizer</h3>
+        <p className="mt-2 text-sm leading-7 text-[#6b5739]">
+          Drag each section with a mouse or touch. Tap size to cycle between full, wide, compact, and half widths. Every change writes to Firebase layout.
+        </p>
+        <div className="mt-5 flex flex-wrap gap-2">
+          <Button type="button" variant="ghost" onClick={() => applyPreset("reverse")}>
+            Reverse order
+          </Button>
+          <Button type="button" variant="ghost" onClick={() => applyPreset("twoTop")}>
+            Two top, one base
+          </Button>
+          <Button type="button" variant="ghost" onClick={() => applyPreset("editorial")}>
+            Swap wide and compact
+          </Button>
+        </div>
+      </div>
+
+      <form className={cn(panelClass, "grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end")} onSubmit={saveHeroImage}>
+        <label className="space-y-2">
+          <span className={labelClass}>Full-bleed hero image</span>
+          <input className={inputClass} value={heroImage} onChange={(event) => setHeroImage(event.target.value)} />
+        </label>
+        <Button type="submit" variant="gold">
+          Save hero
+        </Button>
+      </form>
+
+      <div className="grid gap-5 lg:grid-cols-[360px_1fr]">
+        <div className={cn(panelClass, "space-y-3")}>
+          {draft.sections.map((section) => (
+            <div
+              className={cn(
+                "touch-none rounded-3xl border border-[#d8b86a]/40 bg-[#fff8ec] p-4 transition",
+                draggingId === section.id ? "scale-[1.02] border-[#9b6b1f] shadow-lg" : "hover:border-[#9b6b1f]",
+              )}
+              key={section.id}
+              onPointerDown={() => setDraggingId(section.id)}
+              onPointerEnter={() => {
+                if (draggingId && draggingId !== section.id) {
+                  setDraft((current) => ({ ...current, sections: reorderSections(current.sections, draggingId, section.id) }));
                 }
+              }}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className={labelClass}>Drag handle</p>
+                  <h4 className="font-serif text-2xl font-semibold">{section.label}</h4>
+                </div>
+                <Button type="button" variant="ghost" onClick={() => changeSpan(section)}>
+                  {section.span}
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className={panelClass}>
+          <p className={labelClass}>Live composition preview</p>
+          <div className="mt-5 grid grid-cols-12 gap-3">
+            {draft.sections.map((section) => (
+              <div className={cn(sectionSpanClass(section.span), "min-h-28 rounded-3xl bg-gradient-to-br from-[#fff8ec] to-[#ead4aa] p-4")} key={section.id}>
+                <p className="font-serif text-2xl font-semibold">{section.label}</p>
+                <p className="mt-2 text-sm text-[#6b5739]">{section.span} section</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-                const card = document.createElement('div');
-                card.className = 'bg-cream rounded-lg overflow-hidden shadow-sm border border-softbeige group relative';
-                card.innerHTML = `
-                    <div class="relative overflow-hidden aspect-square bg-gray-100">
-                        <img src="${prod.image}" alt="${prod.title}" id="prod-img-${index}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 resize-handle" style="resize: both; overflow: auto;" title="Drag-to-resize handle active">
-                        <button onclick="toggleWishlist('${prod.id}')" class="absolute top-3 right-3 bg-white/80 p-2 rounded-full text-luxdark hover:text-luxgold transition-colors">
-                            <i class="${wishlist.includes(prod.id) ? 'fa-solid text-luxgold' : 'fa-regular'} fa-heart"></i>
-                        </button>
-                    </div>
-                    <div class="p-5">
-                        ${timerHtml}
-                        <h3 class="font-serif text-lg font-bold text-luxdark mb-2">${prod.title}</h3>
-                        <div class="flex items-baseline space-x-2 space-x-reverse mb-4">
-                            <span class="text-luxgold font-serif font-bold text-lg">${prod.price} جنيه</span>
-                            ${prod.oldPrice ? `<span class="text-gray-400 text-xs line-through">${prod.oldPrice} جنيه</span>` : ''}
-                        </div>
-                        
-                        ${isAdmin ? `
-                            <div class="mb-4 p-2 bg-softbeige/80 rounded border border-luxgold/40 text-[11px] space-y-2">
-                                <span class="font-semibold text-luxgold uppercase block">Admin Inline Controls</span>
-                                <input type="text" value="${prod.image}" onchange="adminUpdateImage('${prod.id}', this.value)" class="w-full bg-white border border-gray-300 p-1 text-[10px]" placeholder="Drive Image Link">
-                                <input type="number" value="${prod.price}" onchange="adminUpdatePrice('${prod.id}', this.value)" class="w-full bg-white border border-gray-300 p-1 text-[10px]" placeholder="New Price EGP">
-                            </div>
-                        ` : ''}
-
-                        <button onclick="addToCart('${prod.id}')" class="w-full bg-luxdark text-cream py-3 text-xs uppercase tracking-widest font-medium hover:bg-luxgold transition-all">
-                            Add to Bag
-                        </button>
-                    </div>
-                `;
-                grid.appendChild(card);
-            });
-            updateBadges();
-        }
-
-        // Cart & Wishlist Logic
-        function addToCart(prodId) {
-            const prod = products.find(p => p.id === prodId);
-            if (!prod) return;
-            cart.push(prod);
-            localStorage.setItem('aurelia_cart', JSON.stringify(cart));
-            updateBadges();
-            openCartModal();
-        }
-
-        function toggleWishlist(prodId) {
-            const index = wishlist.indexOf(prodId);
-            if (index > -1) {
-                wishlist.splice(index, 1);
-            } else {
-                wishlist.push(prodId);
-            }
-            localStorage.setItem('aurelia_wishlist', JSON.stringify(wishlist));
-            renderProducts();
-        }
-
-        function updateBadges() {
-            document.getElementById('cart-count').textContent = cart.length;
-            document.getElementById('wishlist-count').textContent = wishlist.length;
-        }
-
-        // Cart Modal Actions
-        document.getElementById('cart-btn').addEventListener('click', openCartModal);
-        document.getElementById('close-cart').addEventListener('click', closeCartModal);
-
-        function openCartModal() {
-            const container = document.getElementById('cart-items-container');
-            container.innerHTML = '';
-            let total = 0;
-
-            if (cart.length === 0) {
-                container.innerHTML = `<p class="text-xs text-gray-500 text-center py-10">Your bag is currently empty.</p>`;
-            } else {
-                cart.forEach((item, index) => {
-                    total += Number(item.price);
-                    const div = document.createElement('div');
-                    div.className = 'flex items-center justify-between bg-softbeige p-3 rounded';
-                    div.innerHTML = `
-                        <div class="flex items-center space-x-3 space-x-reverse">
-                            <img src="${item.image}" class="w-12 h-12 object-cover rounded">
-                            <div>
-                                <h4 class="font-serif text-xs font-bold text-luxdark">${item.title}</h4>
-                                <span class="text-xs text-luxgold font-semibold">${item.price} جنيه</span>
-                            </div>
-                        </div>
-                        <button onclick="removeFromCart(${index})" class="text-red-600 text-xs hover:underline"><i class="fa-solid fa-trash"></i></button>
-                    `;
-                    container.appendChild(div);
-                });
-            }
-            document.getElementById('cart-total-price').textContent = total + ' جنيه';
-            document.getElementById('cart-modal').classList.remove('hidden');
-        }
-
-        function closeCartModal() {
-            document.getElementById('cart-modal').classList.add('hidden');
-        }
-
-        function removeFromCart(index) {
-            cart.splice(index, 1);
-            localStorage.setItem('aurelia_cart', JSON.stringify(cart));
-            openCartModal();
-            updateBadges();
-        }
-
-        // Wishlist Modal Actions
-        document.getElementById('wishlist-btn').addEventListener('click', () => {
-            const container = document.getElementById('wishlist-items-container');
-            container.innerHTML = '';
-            if (wishlist.length === 0) {
-                container.innerHTML = `<p class="text-xs text-gray-500 text-center py-10">Your wishlist is empty.</p>`;
-            } else {
-                wishlist.forEach(id => {
-                    const prod = products.find(p => p.id === id);
-                    if (prod) {
-                        const div = document.createElement('div');
-                        div.className = 'flex items-center justify-between bg-softbeige p-3 rounded';
-                        div.innerHTML = `
-                            <div class="flex items-center space-x-3 space-x-reverse">
-                                <img src="${prod.image}" class="w-12 h-12 object-cover rounded">
-                                <div>
-                                    <h4 class="font-serif text-xs font-bold text-luxdark">${prod.title}</h4>
-                                    <span class="text-xs text-luxgold font-semibold">${prod.price} جنيه</span>
-                                </div>
-                            </div>
-                            <button onclick="addToCart('${prod.id}'); toggleWishlist('${prod.id}');" class="bg-luxdark text-cream px-3 py-1 text-[10px] uppercase">Add</button>
-                        `;
-                        container.appendChild(div);
-                    }
-                });
-            }
-            document.getElementById('wishlist-modal').classList.remove('hidden');
-        });
-        document.getElementById('close-wishlist').addEventListener('click', () => document.getElementById('wishlist-modal').classList.add('hidden'));
-        document.getElementById('close-wishlist-bottom').addEventListener('click', () => document.getElementById('wishlist-modal').classList.add('hidden'));
-
-        // Checkout Flow & Authentication Check
-        document.getElementById('checkout-btn').addEventListener('click', () => {
-            if (cart.length === 0) {
-                alert('Your shopping bag is empty.');
-                return;
-            }
-            closeCartModal();
-            if (!currentUser) {
-                openAuthModal('register');
-            } else {
-                alert(`Checkout successful! Order placed and shipping via البريد المصري to ${currentUser.address || 'Cairo'}. Thank you for shopping with AURÉLIA!`);
-                cart = [];
-                localStorage.setItem('aurelia_cart', JSON.stringify(cart));
-                updateBadges();
-            }
-        });
-
-        // Authentication Modal Management
-        function openAuthModal(mode = 'login') {
-            document.getElementById('auth-modal').classList.remove('hidden');
-            switchAuthMode(mode);
-        }
-
-        function closeAuthModal() {
-            document.getElementById('auth-modal').classList.add('hidden');
-        }
-
-        function switchAuthMode(mode) {
-            document.getElementById('login-form-container').classList.add('hidden');
-            document.getElementById('register-form-container').classList.add('hidden');
-            document.getElementById('otp-form-container').classList.add('hidden');
-            document.getElementById('address-form-container').classList.add('hidden');
-
-            if (mode === 'login') {
-                document.getElementById('login-form-container').classList.remove('hidden');
-                document.getElementById('auth-title').textContent = 'Sign In to AURÉLIA';
-                document.getElementById('auth-subtitle').textContent = 'Access your wishlist and orders';
-            } else if (mode === 'register') {
-                document.getElementById('register-form-container').classList.remove('hidden');
-                document.getElementById('auth-title').textContent = 'Create Account';
-                document.getElementById('auth-subtitle').textContent = 'Verification via WhatsApp from 01159055625';
-            }
-        }
-
-        // Login Handler (Supports Default Admin: Mohamed Nasser / Mohamed59*)
-        document.getElementById('login-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const email = document.getElementById('login-email').value.trim();
-            const pass = document.getElementById('login-password').value.trim();
-
-            if (email === 'Mohamed Nasser' && pass === 'Mohamed59*') {
-                currentUser = { name: 'Mohamed Nasser', role: 'admin', phone: '01159055625', address: 'Cairo, Egypt' };
-            } else {
-                currentUser = { name: email, role: 'customer', phone: '01000000000', address: 'Cairo, Egypt' };
-            }
-
-            localStorage.setItem('aurelia_current_user', JSON.stringify(currentUser));
-            closeAuthModal();
-            renderProducts();
-            alert(`Welcome back, ${currentUser.name}!`);
-        });
-
-        // Registration Step 1 -> WhatsApp OTP trigger
-        let tempRegData = {};
-        document.getElementById('register-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            tempRegData.name = document.getElementById('reg-name').value;
-            tempRegData.email = document.getElementById('reg-email').value;
-            tempRegData.phone = document.getElementById('reg-phone').value;
-
-            document.getElementById('register-form-container').classList.add('hidden');
-            document.getElementById('otp-form-container').classList.remove('hidden');
-            document.getElementById('auth-title').textContent = 'WhatsApp OTP Verification';
-            document.getElementById('auth-subtitle').textContent = `Sent from sender 01159055625 to ${tempRegData.phone}`;
-        });
-
-        // OTP Verification Step 2 -> Address Form
-        document.getElementById('otp-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const otp = document.getElementById('otp-code').value.trim();
-            if (otp === '5959' || otp === '1234') {
-                document.getElementById('otp-form-container').classList.add('hidden');
-                document.getElementById('address-form-container').classList.remove('hidden');
-                document.getElementById('auth-title').textContent = 'Delivery Address & Shipping Notice';
-                document.getElementById('auth-subtitle').textContent = 'Shipping is processed via Egypt Post (البريد المصري)';
-            } else {
-                alert('Invalid OTP. Please enter 5959.');
-            }
-        });
-
-        // Address Form Step 3 -> Complete Registration
-        document.getElementById('address-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            tempRegData.address = document.getElementById('user-address').value;
-            tempRegData.role = 'customer';
-            currentUser = tempRegData;
-
-            localStorage.setItem('aurelia_current_user', JSON.stringify(currentUser));
-            closeAuthModal();
-            renderProducts();
-            alert('Registration complete! Welcome to AURÉLIA.');
-        });
-
-        // User Profile Modal Actions
-        document.getElementById('profile-btn').addEventListener('click', () => {
-            if (!currentUser) {
-                openAuthModal('login');
-            } else {
-                document.getElementById('profile-user-name').textContent = currentUser.name + (currentUser.role === 'admin' ? ' (Admin)' : '');
-                document.getElementById('profile-phone-display').textContent = currentUser.phone || '01159055625';
-                document.getElementById('profile-address-display').textContent = (currentUser.address || 'Cairo, Egypt') + ' (Shipping via البريد المصري)';
-                document.getElementById('profile-modal').classList.remove('hidden');
-            }
-        });
-
-        function closeProfileModal() {
-            document.getElementById('profile-modal').classList.add('hidden');
-        }
-
-        function logoutUser() {
-            currentUser = null;
-            localStorage.removeItem('aurelia_current_user');
-            closeProfileModal();
-            renderProducts();
-            alert('Signed out successfully.');
-        }
-
-        function triggerPhoneUpdate() {
-            const newPhone = prompt('Enter new phone number (triggers WhatsApp OTP flow):', currentUser.phone);
-            if (newPhone) {
-                currentUser.phone = newPhone;
-                localStorage.setItem('aurelia_current_user', JSON.stringify(currentUser));
-                alert(`WhatsApp OTP sent from 01159055625 to ${newPhone}. Verified successfully!`);
-                document.getElementById('profile-phone-display').textContent = newPhone;
-            }
-        }
-
-        // Admin Inline Editing Functions
-        function adminUpdateImage(prodId, rawUrl) {
-            const prod = products.find(p => p.id === prodId);
-            if (prod) {
-                prod.image = convertGoogleDriveLink(rawUrl);
-                localStorage.setItem('aurelia_products', JSON.stringify(products));
-                renderProducts();
-            }
-        }
-
-        function adminUpdatePrice(prodId, newPrice) {
-            const prod = products.find(p => p.id === prodId);
-            if (prod) {
-                prod.price = Number(newPrice);
-                localStorage.setItem('aurelia_products', JSON.stringify(products));
-                renderProducts();
-            }
-        }
-
-        document.getElementById('add-product-btn').addEventListener('click', () => {
-            document.getElementById('admin-product-modal').classList.remove('hidden');
-        });
-
-        function closeAdminProductModal() {
-            document.getElementById('admin-product-modal').classList.add('hidden');
-        }
-
-        document.getElementById('admin-product-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const title = document.getElementById('new-prod-title').value;
-            const price = Number(document.getElementById('new-prod-price').value);
-            const rawImg = document.getElementById('new-prod-img').value;
-
-            const newProd = {
-                id: 'prod_' + Date.now(),
-                title: title,
-                price: price,
-                oldPrice: price + 3000,
-                image: convertGoogleDriveLink(rawImg),
-                timerEnd: Date.now() + 86400000
-            };
-
-            products.push(newProd);
-            localStorage.setItem('aurelia_products', JSON.stringify(products));
-            closeAdminProductModal();
-            renderProducts();
-        });
-
-        // Mobile Menu Toggle
-        document.getElementById('mobile-menu-btn').addEventListener('click', () => {
-            const menu = document.getElementById('mobile-menu');
-            const drawer = document.getElementById('mobile-menu-drawer');
-            menu.classList.remove('hidden');
-            setTimeout(() => {
-                menu.classList.remove('opacity-0');
-                drawer.classList.remove('-translate-x-full');
-            }, 10);
-        });
-
-        document.getElementById('close-mobile-menu').addEventListener('click', closeMobileDrawer);
-        document.getElementById('mobile-menu').addEventListener('click', (e) => {
-            if (e.target === document.getElementById('mobile-menu')) closeMobileDrawer();
-        });
-
-        function closeMobileDrawer() {
-            const menu = document.getElementById('mobile-menu');
-            const drawer = document.getElementById('mobile-menu-drawer');
-            menu.classList.add('opacity-0');
-            drawer.classList.add('-translate-x-full');
-            setTimeout(() => menu.classList.add('hidden'), 300);
-        }
-
-        document.querySelectorAll('.mobile-nav-link').forEach(link => {
-            link.addEventListener('click', closeMobileDrawer);
-        });
-
-        // Language Toggle (EN / AR RTL)
-        document.getElementById('lang-toggle').addEventListener('click', () => {
-            currentLang = currentLang === 'en' ? 'ar' : 'en';
-            const htmlTag = document.documentElement;
-            if (currentLang === 'ar') {
-                htmlTag.setAttribute('lang', 'ar');
-                htmlTag.setAttribute('dir', 'rtl');
-                document.getElementById('announcement-text').textContent = 'شحن مجاني لكافة أنحاء مصر عبر البريد المصري | مجوهرات راقية حصرية';
-            } else {
-                htmlTag.setAttribute('lang', 'en');
-                htmlTag.setAttribute('dir', 'ltr');
-                document.getElementById('announcement-text').textContent = 'Complimentary Shipping Across Egypt via البريد المصري | Exclusive Fine Jewelry';
-            }
-        });
-
-        // Initial render on load
-        renderProducts();
-    </script>
-</body>
-</html>
+function SyncPanel({ onRefresh, status }: { onRefresh: () => Promise<void>; status: ConnectionStatus }) {
+  return (
+    <div className={panelClass}>
+      <p className={labelClass}>Firebase Realtime Database</p>
+      <h3 className="mt-2 font-serif text-3xl font-semibold">Live data connection</h3>
+      <div className="mt-5 space-y-3 text-sm leading-7 text-[#5f4b31]">
+        <p>Endpoint: {FIREBASE_URL}</p>
+        <p>Status: {status.message}</p>
+        <p>Last sync: {status.lastSync}</p>
+        <p>Realtime stream: {status.realtime ? "enabled" : "polling fallback enabled"}</p>
+      </div>
+      <Button className="mt-5" type="button" variant="gold" onClick={onRefresh}>
+        Refresh now
+      </Button>
+    </div>
+  );
+}
